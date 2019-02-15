@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 '''textgrids -- Read and handle Praat’s (long) TextGrids
 
   Author :  Tommi Nieminen <software@legisign.org>
   License:  GNU General Public License version 3 or newer
 
-  2016-02-15    1.2.0   Finally beginning to handle point tiers.
-  2018-01-15    1.3.0   Back to the project.
-  2018-04-06    1.4.0   Added selection of tier(s) to print in __main__().
+  A clunkier version for Python 2 (for use with wxPython UIs).
+
+  2018-02-21    Done. (TN)
 
 '''
 
@@ -14,7 +15,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '1.4.0'
+version = '1.3.0'
 
 # Known keys in different contexts (constant)
 known_keys = {
@@ -52,17 +53,17 @@ def _readtobuffer(stream):
     Replace with a more robust algorithm if you’re having problems.'''
     return [line.strip() for line in stream]
 
-class TextGrid(OrderedDict):
+class TextGrid(object):
     '''TextGrid is a dictionary of tier where tier names are keys.
 
     Tiers are simple lists that contain either Interval or Point objects.
     '''
     def __init__(self, inputfile=None):
-        super().__init__({})
+        self.data = OrderedDict()
+        #OrderedDict.__init__(OrderedDict())
+        #super().__init__({})
         if inputfile:
             self.read(inputfile)
-        else:
-            self.filename = None
 
     def __repr__(self):
         buff = ['File type = "ooTextFile"',
@@ -92,20 +93,11 @@ class TextGrid(OrderedDict):
                 tier_count += 1
         return '\n'.join([line.replace('\t', '    ') for line in buff])
 
-    def concat(self, tier_name, first=0, last=-1):
-        '''Concatenate given segments on given tier.'''
-        tier = self[tier_name]
-        area = tier[first:last]
-        beg = tier[first].xmin
-        end = tier[last].xmax
-        text = ' '.join([segm.text for segm in area])
-        new_segm = Interval(text=text, xmin=beg, xmax=end)
-        tier = tier[first:] + new_segm + tier[:last]
-
     def csv(self, tier):
         '''Return tier in a CSV-like list.'''
         return ['"{}";{};{}'.format(text, xmin, xmax) \
-                for text, xmin, xmax in self[tier]]
+                #for text, xmin, xmax in self[tier]]
+                for text, xmin, xmax in self.data[tier]]
 
     def export(self, csvfile):
         '''Export textgrid to a CSV file.'''
@@ -142,7 +134,7 @@ class TextGrid(OrderedDict):
                     # Note: the variables now point to the same list
                     # (to simplify references)
                     #tier = self[val] = []
-                    tier = self[val] = []
+                    tier = self.data[val] = []
             elif mode == 'interval':
                 key, val = _keyval(line, checklist=known_keys['intervals'])
                 if key == 'xmin':
@@ -160,13 +152,12 @@ class TextGrid(OrderedDict):
 
     def read(self, filename):
         '''Read a file as a TextGrid.'''
-        self.filename = filename
         # Praat uses UTF-16 or UTF-8 with no apparent pattern
         try:
-            with codecs.open(self.filename, 'r', 'UTF-16') as f:
+            with codecs.open(filename, 'r', 'UTF-16') as f:
                 buff = _readtobuffer(f)
         except UnicodeError:
-            with open(self.filename, 'r') as f:
+            with open(filename, 'r') as f:
                 buff = _readtobuffer(f)
         self.parse(buff)
 
@@ -178,32 +169,13 @@ class TextGrid(OrderedDict):
 # A simple test run
 if __name__ == '__main__':
     import sys
-    import os.path
-
-    def die(msg):
-        print('{}: {}'.format(os.path.basename(sys.argv[0]), msg),
-              file=sys.stderr)
-        sys.exit(1)
-
     if len(sys.argv) == 1:
         print('Usage: textgrids FILE...')
-    tiers = []
     for arg in sys.argv[1:]:
-        if not arg.endswith('.TextGrid'):
-            tiers.append(arg)
-        else:
-            try:
-                textgrid = TextGrid(arg)
-            except ParseError:
-                die('Invalid or not a textgrid: {}'.format(arg))
-                continue
-            print('"{}"'.format(textgrid.filename))
-            if tiers:
-                for tier in tiers:
-                    if tier not in textgrid:
-                        die('Ei tasoa "{}" tiedostossa "{}"'.format(tier, textgrid.filename))
-                    print('\n'.join(textgrid.csv(tier)))
-            else:
-                for tier in textgrid:
-                    print('\n'.join(textgrid.csv(tier)))
-            tiers = []
+        try:
+            textgrid = TextGrid(arg)
+        except ParseError:
+            print('Invalid or not a textgrid: {}'.format(arg))
+            continue
+        for tier in textgrid:
+            print('\n'.join(textgrid.csv(tier)))

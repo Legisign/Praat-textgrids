@@ -1,0 +1,11 @@
+#
+# textgrid_reader.py
+#
+# Module to read Praat’s TextGrid files (quick and dirty).
+#
+# Author: Tommi Nieminen <software@legisign.org>
+# Version: 1.01 / 2012-04-19
+# License: GPL
+#
+# 2012-04-18    1.0: First workable version. (TN)
+# 2012-04-19    1.01: Added file type check. (TN)
