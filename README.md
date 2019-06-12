@@ -4,12 +4,12 @@ Praat file format manipulations in Python.
 
 ## pitches.py
 
-An as-yet very rudimentary class and methods for handling Praat LONG pitch files.
+An as-yet very rudimentary class and methods for handling Praat LONG text-form pitch files.
 
 ## textgrids.py
 
-A class and methods for handling Praat’s LONG textgrid files.
+A class and methods for handling Praat’s text-form (long or short) textgrid files.
 
-## NOTE:
+## textgrids2.py
 
-In time I may add support for short-form files but since I don’t use them myself, I haven’t had the motivation yet.
+A somewhat clunkier version of textgrids.py for Python 2. May not always be quite up-to-date.
