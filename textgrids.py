@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 '''textgrids -- Read and handle Praat’s (long) TextGrids
 
-  Author :  Tommi Nieminen <software@legisign.org>
-  License:  GNU General Public License version 3 or newer
+  © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
+  Published under GNU General Public License version 3 or newer
 
-  2016-02-15    1.2.0   Finally beginning to handle point tiers.
-  2018-01-15    1.3.0   Back to the project.
-  2018-04-06    1.4.0   Added selection of tier(s) to print in __main__().
+  2019-06-12    r7  Finally a parser for short-form textgrids. Long-form
+                    may be unfunctional for a while now :)
 
 '''
 
@@ -14,7 +13,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '1.4.0'
+version = '7'
 
 # Known keys in different contexts (constant)
 known_keys = {
@@ -24,8 +23,7 @@ known_keys = {
     'intervals': ('xmin', 'xmax', 'text')
 }
 
-# New types (intervals, points)
-Interval = namedtuple('Interval', ['text', 'xmin', 'xmax'])
+# Point type
 Point = namedtuple('Point', ['text', 'xpos'])
 
 class ParseError(Exception):
@@ -36,13 +34,11 @@ def _keyval(s, checklist=None):
     keyval = re.compile('^\s*(.+)\s+=\s+(.+)$')
     key, val = keyval.match(s).groups()
     if checklist and key not in checklist:
-        print('Unexpected key: "{}"'.format(key))
+        # print('Unexpected key: "{}"'.format(key))
         raise ParseError('Unexpected key: "{}"'.format(key))
     elif val.startswith('"'):
         val = val.strip('"')
     else:
-        # Sometimes int() would be more efficient, but Praat doesn’t
-        # make the difference
         val = float(val)
     return key, val
 
@@ -52,19 +48,42 @@ def _readtobuffer(stream):
     Replace with a more robust algorithm if you’re having problems.'''
     return [line.strip() for line in stream]
 
+class Interval(object):
+    '''Interval is a timeframe between xmin and xmax with label text.'''
+    def __init__(self, text=None, xmin=0.0, xmax=0.0):
+        self.text = text
+        self.xmin = xmin
+        self.xmax = xmax
+
+    def __repr__(self):
+        '''Return (semi-)readable representation of self.'''
+        return '<Interval text="{}" xmin={} xmax={}>'.format(self.text,
+                                                             self.xmin,
+                                                             self.xmax)
+
+    @property
+    def dur(self):
+        '''Return duration.'''
+        return self.xmax - self.xmin
+
+    @property
+    def mid(self):
+        '''Return midpoint in time.'''
+        return self.xmin + self.dur / 2
+
 class TextGrid(OrderedDict):
     '''TextGrid is a dictionary of tier where tier names are keys.
 
     Tiers are simple lists that contain either Interval or Point objects.
     '''
-    def __init__(self, inputfile=None):
+    def __init__(self, read_file=None):
         super().__init__({})
-        if inputfile:
-            self.read(inputfile)
-        else:
-            self.filename = None
+        self.filename = read_file
+        if self.filename:
+            self.read(self.filename)
 
     def __repr__(self):
+        '''Return Praat (long) text format representation'''
         buff = ['File type = "ooTextFile"',
                 'Object class = "TextGrid"',
                 '']
@@ -96,10 +115,10 @@ class TextGrid(OrderedDict):
         '''Concatenate given segments on given tier.'''
         tier = self[tier_name]
         area = tier[first:last]
-        beg = tier[first].xmin
-        end = tier[last].xmax
-        text = ' '.join([segm.text for segm in area])
-        new_segm = Interval(text=text, xmin=beg, xmax=end)
+        xmin = tier[first].xmin
+        xmax = tier[last].xmax
+        text = ''.join([segm.text for segm in area])
+        new_segm = Interval(text=text, xmin=xmin, xmax=xmax)
         tier = tier[first:] + new_segm + tier[:last]
 
     def csv(self, tier):
@@ -114,17 +133,22 @@ class TextGrid(OrderedDict):
                 f.write('\n'.join(self.csv(tier)))
 
     def parse(self, data):
-        '''A state grammar parser for the TextGrid data.'''
-        global known_keys
-        for line in data[0:2]:
-            line = line.strip()
-            key, val = _keyval(line, checklist=known_keys['type'])
+        '''Parse short or long text-mode TextGrids.'''
+        filetype, objclass, separ = data[:3]
+        if filetype != 'File type = "ooTextFile"' or \
+           objclass != 'Object class = "TextGrid"' or \
+           separ != '':
+           raise ValueError
+        if re.match('^-?\d+.?\d*$', data[3]):
+            self._parse_short(data[3:])
+        else:
+            self._parse_long(data[3:])
+
+    def _parse_long(self, data):
+        '''Parse LONG textgrid files. Not meant to be used directly.'''
         mode = 'header'
-        for line in data[2:]:
-            line = line.strip()
-            if not line:
-                pass
-            elif line.startswith('item'):
+        for line in data:
+            if line.startswith('item'):
                 mode = 'item'
             elif line.startswith('intervals '):
                 mode = 'interval'
@@ -139,9 +163,7 @@ class TextGrid(OrderedDict):
             elif mode == 'item':
                 key, val = _keyval(line, checklist=known_keys['item'])
                 if key == 'name':
-                    # Note: the variables now point to the same list
-                    # (to simplify references)
-                    #tier = self[val] = []
+                    # Note: same list, just to simplify refs
                     tier = self[val] = []
             elif mode == 'interval':
                 key, val = _keyval(line, checklist=known_keys['intervals'])
@@ -157,6 +179,50 @@ class TextGrid(OrderedDict):
                     xpos = val
                 else:
                     tier.append(Point(text=val, xpos=xpos))
+
+    def _parse_short(self, data):
+        '''Parse SHORT textgrid files. Not meant to be used directly.'''
+        gmin, gmax = [float(num) for num in data[:2]]
+        print('gmin={}, gmax={}'.format(gmin, gmax))
+        if data[2] != '<exists>':
+            return
+        tier = []
+        mode = 'type'
+        for line in data[4:]:
+            print('PARS[{}] :: "{}"'.format(mode, line))
+            if mode == 'type':
+                typ = 'interval' if line == '"IntervalTier"' else 'point'
+                mode = 'name'
+            elif mode == 'name':
+                name = line.strip('"')
+                mode = 'tmin'
+            elif mode == 'tmin':
+                tmin = float(line)
+                mode = 'tmax'
+            elif mode == 'tmax':
+                tmax = float(line)
+                mode = 'tlen'
+            elif mode == 'tlen':
+                tlen = int(line)
+                mode = 'xmin' if typ == 'interval' else 'xmop'
+            elif mode == 'xmin':
+                x0 = float(line)
+                mode = 'xmop'
+            elif mode == 'xmop':
+                x1 = float(line)
+                mode = 'text'
+            elif mode == 'text':
+                if typ == 'interval':
+                    tier.append(Interval(line.strip('"') , x0, x1))
+                else:
+                    tier.append(Point(line.strip('"'), x1))
+                if len(tier) == tlen:
+                    self[name] = tier
+                    name = None
+                    tier = []
+                    mode = 'type'
+                else:
+                    mode = 'xmin'
 
     def read(self, filename):
         '''Read a file as a TextGrid.'''
@@ -180,30 +246,22 @@ if __name__ == '__main__':
     import sys
     import os.path
 
+    # Error messages
+    INVALID_TEXTGRID = 'ERROR: invalid textgrid or not a textgrid: "{}"'
+    TIER_NOT_FOUND = 'ERROR: no tier "{}" in file "{}"'
+
     def die(msg):
         print('{}: {}'.format(os.path.basename(sys.argv[0]), msg),
               file=sys.stderr)
         sys.exit(1)
 
     if len(sys.argv) == 1:
-        print('Usage: textgrids FILE...')
-    tiers = []
+        print('USAGE: textgrids FILE...')
     for arg in sys.argv[1:]:
-        if not arg.endswith('.TextGrid'):
-            tiers.append(arg)
-        else:
-            try:
-                textgrid = TextGrid(arg)
-            except ParseError:
-                die('Invalid or not a textgrid: {}'.format(arg))
-                continue
-            print('"{}"'.format(textgrid.filename))
-            if tiers:
-                for tier in tiers:
-                    if tier not in textgrid:
-                        die('Ei tasoa "{}" tiedostossa "{}"'.format(tier, textgrid.filename))
-                    print('\n'.join(textgrid.csv(tier)))
-            else:
-                for tier in textgrid:
-                    print('\n'.join(textgrid.csv(tier)))
-            tiers = []
+        try:
+            textgrid = TextGrid(arg)
+        except ParseError:
+            die(INVALID_TEXTGRID.format(arg))
+            continue
+        # Print in long format
+        print(textgrid)

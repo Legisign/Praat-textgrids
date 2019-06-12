@@ -1,11 +1,9 @@
-#
-# textgrid_reader.py
-#
-# Module to read Praat’s TextGrid files (quick and dirty).
-#
-# Author: Tommi Nieminen <software@legisign.org>
-# Version: 1.01 / 2012-04-19
-# License: GPL
-#
-# 2012-04-18    1.0: First workable version. (TN)
-# 2012-04-19    1.01: Added file type check. (TN)
+  2012-04-18    r1  First workable version.
+  2012-04-19    r2  Added file type check.
+  2016-02-15    r3  Finally beginning to handle point tiers.
+  2018-01-15    r4  Back to the project.
+  2018-04-06    r5  Added selection of tier(s) to print in __main__().
+  2019-06-07    r6  Changed Interval to object in order to have dur() and
+                    mid() convenience methods.
+  2019-06-12    r7  Finally a parser for short-form textgrids. Long-form
+                    may be unfunctional for a while now :)
