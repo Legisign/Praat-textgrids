@@ -7,3 +7,7 @@
                     mid() convenience methods.
   2019-06-12    r7  Finally a parser for short-form textgrids. Long-form
                     may be unfunctional for a while now :)
+  2019-06-12    r8  A new parser for long-form textgrids. A new timegrid()
+                    method for interval tiers.
+  2019-06-16    r9  Bug fix in Interval.timegrid().
+  2019-06-19    r10 A new object layer: Tier. Simple parse error handling.
