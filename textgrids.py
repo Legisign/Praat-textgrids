@@ -4,7 +4,9 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-06-19    r10 A new object layer: Tier. Simple parse error handling.
+  2019-06-24    r11     Bug fix. New Interval methods startswithvowel(),
+                        containsvowel(). New Transcript class with handy
+                        Praat-to-Unicode and Unicode-to-Praat methods.
 
 '''
 
@@ -12,11 +14,149 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '10'
+version = '11'
+
+# Global variable: Praat-to-Unicode character mappings
+
+# Symbol table
+# (only vowels are added first in order to get the ’vowels’ variable)
+symbols = {r'\i-': '\u0268',        # unrounded close central
+           r'\u-': '\u0289',        # rounded close central
+           r'\mt': '\u026f',        # unrounded close back
+           r'\ic': '\u026a',        # unrounded close lax front
+           r'\yc': '\u028f',        # rounded close lax front
+           r'\hs': '\u028a',        # rounded close lax back
+           r'\o/': 'ø',             # rounded close-mid front
+           r'\e-': '\u0258',        # unrounded close-mid central
+           r'\o-': '\u0275',        # rounded close-mid central
+           r'\rh': '\u0264',        # unrounded close-mid back
+           r'\sw': '\u0259',        # neutral vowel, schwa
+           r'\ef': 'ɛ',             # unrounded open-mid front
+           r'\oe': 'œ',             # rounded open-mid front
+           r'\er': '\u025c',        # unrounded open-mid central
+           r'\kb': '\u025e',        # rounded open-mid central
+           r'\vt': '\u028c',        # unrounded open-mid back
+           r'\ct': '\u0254',        # rounded open-mid back
+           r'\ae': 'æ',             # unrounded nearly open back
+           r'\at': '\u0250',        # unrounded open central
+           r'\Oe': '\u0276',        # rounded open front
+           r'\as': '\u03b1',        # unrounded open back
+           r'\ab': '\u0252'}        # rounded open back
+
+# Vowels in either notation
+vowels = list(symbols.keys()) + list(symbols.values())
+
+# Now add the consonants
+symbols.update({r'\t.': '\u0288',   # voiceless retroflex plosive
+                r'\?-': '\u02a1',   # voiceless epiglottal plosive
+                r'\?g': '\u0294',   # voiceless glottal plosive
+                r'\d.': '\u0256',   # voiced retroflex plosive
+                r'\j-': '\u025f',   # voiced palatal plosive
+                r'\gs': '\u0261',   # voiced velar plosive
+                r'\gc': '\u0262',   # voiced uvular plosive
+                r'\mj': '\u0271',   # voiced labiodental nasal
+                r'\n.': '\u0273',   # voiced retroflex nasal
+                r'\ng': 'ŋ',        # voiced velar nasal
+                r'\nc': '\u0274',   # voiced uvular nasal
+                r'\ff': '\u0278',   # voiced bilabial fricative
+                r'\tf': '\u019f',   # voiceless dental fricative
+                r'\l-': '\u026c',   # voiceless alveolodental fricative
+                r'\sh': '\u0283',   # voiceless postalveolar fricative
+                r'\s.': '\u0282',   # voiceless retroflex fricative
+                r'\cc': '\u0255',   # voiceless alveolopalatal fricative
+                r'\c,': 'ç',        # voiceless palatal fricative
+                r'\wt': '\u028d',   # voiceless labiovelar fricative
+                r'\cf': '\u03c7',   # voiceless uvular fricative
+                r'\h-': '\u0127',   # voiceless pharyngeal fricative
+                r'\hc': '\u029c',   # voiceless epiglottal fricative
+                r'\bf': '\u03b2',   # voiced bilabial fricative
+                r'\dh': '\u00f0',   # voiced dental fricative
+                r'\lz': '\u026e',   # voiced lateral fricative
+                r'\zh': '\u0292',   # voiced postalveolar fricative
+                r'\z.': '\u0290',   # voiced retroflex fricative
+                r'\zc': '\u0291',   # voiced alveolopalatal fricative
+                r'\jc': '\u029d',   # voiced palatal fricative
+                r'\gf': '\u0263',   # voiced velar fricative
+                r'\ri': '\u0281',   # voiced uvular fricative
+                r'\9e': '\u0295',   # voiced pharyngeal fricative
+                r'\9-': '\u02a2',   # voiced epiglottal fricative
+                r'\h^': '\u0266',   # voiced glottal fricative
+                r'\vs': '\u028b',   # voiced labiodental approximant
+                r'\rt': '\u0279',   # voiced alveolar approximant
+                r'\r.': '\u027b',   # voiced retroflex approximant
+                r'\ht': '\u0265',   # voiced labial-palatal approximant
+                r'\ml': '\u0270',   # voiced velar approximant
+                r'\bc': '\u0299',   # voiced bilabial trill
+                r'\rc': '\u0280',   # voiced uvular trill
+                r'\fh': '\u027e',   # voiced alveolar tap
+                r'\rl': '\u027a',   # voiced lateral flap
+                r'\f.': '\u027d',   # voiced retroflex flap
+                r'\l.': '\u026d',   # voiced retroflex lateral
+                r'\yt': '\u028e',   # voiced lateral approximant
+                r'\lc': '\u029f',   # voiced velar lateral approximant
+                r'\b^': '\u0253',   # bilabial implosive stop
+                r'\d^': '\u0257',   # alveolar implosive stop
+                r'\j^': '\u0284',   # palatal implosive stop
+                r'\g^': '\u0260',   # velar implosive stop
+                r'\G^': '\u029b',   # uvular implosive stop
+                r'\O.': '\u0298',   # bilabial click
+                r'\|1': '\u01c0',   # dental click
+                r'\|2': '\u01c1',   # lateral click
+                r'\|-': '\u01c2',   # palatoalveolar click
+                r'\l~': '\u026b',   # velarized voiced alveolar lateral appr.
+                r'\hj': '\u0267'})  # rounded postalveolar-velar fricative
+
+diacritics = {r'\|v': '',           # syllabic (understrike)
+              r'\0v': '',           # voiceless (understrike)
+              r'\Tv': '',           # lowered (understrike)
+              r'\T^': '',           # raised (understrike)
+              r'\T(': '',           # ATR (understrike)
+              r'\T)': '',           # RTR (understrike)
+              r'\-v': '',           # backed (understrike)
+              r'\+v': '',           # fronted (understrike)
+              r'\:v': '',           # breathy voiced (understrike)
+              r'\~v': '',           # creaky voiced (understrike)
+              r'\Nv': '',           # dental (understrike)
+              r'\Uv': '',           # apical (understrike)
+              r'\Dv': '',           # laminal (understrike)
+              r'\nv': '',           # nonsyllabic (understrike)
+              r'\3v': '',           # slightly rounded (understrike)
+              r'\cv': '',           # slightly unrounded (understrike)
+              r'\0^': '',           # voiceless (overstrike)
+              r"\'^": '',           # high tone (overstrike)
+              r'\`^': '',           # low tone (overstrike)
+              r'-^': '',            # mid tone (overstrike)
+              r'~^': '',            # nasalized (overstrike)
+              r'\v^': '',           # rising tone (overstrike)
+              r'\^^': '',           # falling tone (overstrike)
+              r'\:^': '',           # centralized (overstrike)
+              r'\N^': '',           # short (overstrike)
+              r'\li': ''}           # simultaneous articulation (overstrike)
 
 class ParseError(Exception):
     def __str__(self):
         return 'Parse error on line {}'.format(self.args[0])
+
+class Transcript(str):
+    '''String class with an extra transcode() method.'''
+
+    def transcode(self, to_unicode=True, retain_diacritics=False):
+        '''Provide Praat-to-Unicode and Unicode-to-Praat transcoding.
+
+        Unless to_unicode is False, Praat-to-Unicode is assumed.
+        By default removes diacritics (usually best practice for pictures).
+        '''
+        global symbols, diacritics
+        out = str(self)
+        for key, val in symbols.items():
+            if to_unicode and (key in out):
+                out = out.replace(key, val)
+            elif (not to_unicode) and (val in out):
+                out = out.replace(val, key)
+        if not retain_diacritics:
+            for diacritic in diacritics:
+                out = out.replace(diacritic, '')
+        return out
 
 # Point class
 Point = namedtuple('Point', ['text', 'xpos'])
@@ -25,7 +165,7 @@ class Interval(object):
     '''Interval is a timeframe xmin..xmax labelled "text".'''
 
     def __init__(self, text=None, xmin=0.0, xmax=0.0):
-        self.text = text
+        self.text = Transcript(text)
         self.xmin = xmin
         self.xmax = xmax
         if self.xmin > self.xmax:
@@ -37,6 +177,11 @@ class Interval(object):
                                                              self.xmin,
                                                              self.xmax)
 
+    def containsvowel(self):
+        '''Does the label contain a vowel?'''
+        global vowels
+        return any([vow in self.text for vow in vowels])
+
     @property
     def dur(self):
         '''Return duration.'''
@@ -46,6 +191,11 @@ class Interval(object):
     def mid(self):
         '''Return midpoint in time.'''
         return self.xmin + self.dur / 2
+
+    def startswithvowel(self):
+        '''Does the label start with a vowel?'''
+        global vowels
+        return any([self.text.startswith(vow) for vow in vowels])
 
     def timegrid(self, num=3):
         '''Return even-spaced time grid.'''
@@ -165,9 +315,9 @@ class TextGrid(OrderedDict):
                     self[name] = tier
                     name = None
                     tier = None
-            elif new_interval.match(line):
+            elif new_interval.match(line) and not tier:
                 tier = Tier()
-            elif new_point.match(line):
+            elif new_point.match(line) and not tier:
                 tier = Tier(point_tier=True)
             elif new_value.match(line):
                 try:
@@ -186,9 +336,10 @@ class TextGrid(OrderedDict):
                     x1 = val
                 elif key == 'text':
                     if tier.is_point_tier:
-                        tier.append(Point(val, x1))
+                        elem = Point(val, x1)
                     else:
-                        tier.append(Interval(val, x0, x1))
+                        elem = Interval(Transcript(val), x0, x1)
+                    tier.append(elem)
         if tier:
             self[name] = tier
 
@@ -277,16 +428,16 @@ class TextGrid(OrderedDict):
         with open(filename, 'w') as f:
             f.write(str(self))
 
-# A simple test run
+# A simple test if run as script
 if __name__ == '__main__':
     import sys
     import os.path
 
     # Error messages
-    E_IOERR = 'General I/O error in file "{}"'
+    E_IOERR = 'I/O error accessing: "{}"'
     E_NOTFOUND = 'File not found: "{}"'
-    E_PARSE = 'Parse error in file "{}", line {}'
-    E_PERMS = 'No permission to read file "{}"'
+    E_PARSE = 'Parse error: file "{}", line {}'
+    E_PERMS = 'No permission to read: "{}"'
 
     if len(sys.argv) == 1:
         print('Usage: textgrids FILE...')
