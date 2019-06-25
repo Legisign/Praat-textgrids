@@ -231,7 +231,7 @@ class Tier(list):
             new_segm = Interval(text, xmin, xmax)
             self = self[first:] + new_segm + self[:last]
 
-    def csv(self):
+    def to_csv(self):
         '''Return tier data in CSV-like list.'''
         if self.is_point_tier:
             return ['"{}";{}'.format(t, xp) for t, xp in self]
