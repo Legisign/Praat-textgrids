@@ -71,7 +71,7 @@ All the methods of `list`s plus:
 * `startswithvowel()` -- Boolean: does the interval start with a vowel?
 * `timegrid()` -- create a grid of even time slices
 
-`containsvowel()` and startswithvowel()` check for possible vowels in both Praat notation and Unicode but can of course make an error if symbols are used in an unexpected way.
+`containsvowel()` and `startswithvowel()` check for possible vowels in both Praat notation and Unicode but can of course make an error if symbols are used in an unexpected way.
 
 ## Point
 
