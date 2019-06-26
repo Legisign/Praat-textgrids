@@ -106,32 +106,34 @@ symbols.update({r'\t.': '\u0288',   # voiceless retroflex plosive
                 r'\l~': '\u026b',   # velarized voiced alveolar lateral appr.
                 r'\hj': '\u0267'})  # rounded postalveolar-velar fricative
 
-diacritics = {r'\|v': '',           # syllabic (understrike)
-              r'\0v': '',           # voiceless (understrike)
-              r'\Tv': '',           # lowered (understrike)
+# Diacritics include only over- and understrikes---
+# no need to handle in-line symbols
+diacritics = {r'\|v': '\u0329',     # syllabic (understrike)
+              r'\0v': '\u0325',     # voiceless (understrike)
+              r'\Tv': '\u031e',     # lowered (understrike)
               r'\T^': '',           # raised (understrike)
-              r'\T(': '',           # ATR (understrike)
-              r'\T)': '',           # RTR (understrike)
-              r'\-v': '',           # backed (understrike)
-              r'\+v': '',           # fronted (understrike)
-              r'\:v': '',           # breathy voiced (understrike)
-              r'\~v': '',           # creaky voiced (understrike)
-              r'\Nv': '',           # dental (understrike)
-              r'\Uv': '',           # apical (understrike)
-              r'\Dv': '',           # laminal (understrike)
-              r'\nv': '',           # nonsyllabic (understrike)
-              r'\3v': '',           # slightly rounded (understrike)
-              r'\cv': '',           # slightly unrounded (understrike)
-              r'\0^': '',           # voiceless (overstrike)
-              r"\'^": '',           # high tone (overstrike)
-              r'\`^': '',           # low tone (overstrike)
-              r'-^': '',            # mid tone (overstrike)
-              r'~^': '',            # nasalized (overstrike)
-              r'\v^': '',           # rising tone (overstrike)
-              r'\^^': '',           # falling tone (overstrike)
-              r'\:^': '',           # centralized (overstrike)
-              r'\N^': '',           # short (overstrike)
-              r'\li': ''}           # simultaneous articulation (overstrike)
+              r'\T(': '\u0318',     # ATR (understrike)
+              r'\T)': '\u0319',     # RTR (understrike)
+              r'\-v': '\u0320',     # backed (understrike)
+              r'\+v': '\u031f',     # fronted (understrike)
+              r'\:v': '\u0324',     # breathy voiced (understrike)
+              r'\~v': '\u0330',     # creaky voiced (understrike)
+              r'\Nv': '\u032a',     # dental (understrike)
+              r'\Uv': '\u033a',     # apical (understrike)
+              r'\Dv': '\u033b',     # laminal (understrike)
+              r'\nv': '\u032f',     # nonsyllabic (understrike)
+              r'\3v': '\u0339',     # slightly rounded (understrike)
+              r'\cv': '\u031c',     # slightly unrounded (understrike)
+              r'\0^': '\u030a',     # voiceless (overstrike)
+              r"\'^": '\u0301',     # high tone (overstrike)
+              r'\`^': '\u0300',     # low tone (overstrike)
+              r'\-^': '\u0304',     # mid tone (overstrike)
+              r'\~^': '\u0303',     # nasalized (overstrike)
+              r'\v^': '\u030c',     # rising tone (overstrike)
+              r'\^^': '\u0302',     # falling tone (overstrike)
+              r'\:^': '\u0308',     # centralized (overstrike)
+              r'\N^': '\u0306',     # short (overstrike)
+              r'\li': '\u0361'}     # simultaneous articulation (overstrike)
 
 class ParseError(Exception):
     def __str__(self):
@@ -153,9 +155,10 @@ class Transcript(str):
                 out = out.replace(key, val)
             elif (not to_unicode) and (val in out):
                 out = out.replace(val, key)
-        if not retain_diacritics:
-            for diacritic in diacritics:
-                out = out.replace(diacritic, '')
+        for key, val in diacritics.items():
+            if not retain_diacritics:
+                val = ''
+            out = out.replace(key, val)
         return out
 
 # Point class
