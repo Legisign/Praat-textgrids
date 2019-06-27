@@ -28,26 +28,13 @@ You should have received a copy of the GNU General Public License along with thi
 
 `TextGrid` is a `dict` whose keys are tier names (strings) and values are `Tier` objects. The constructor takes an optional filename argument for easy loading and parsing textgrid files.
 
-#### 1.1. Usage
-
-    # create empty textgrid
-    textgrid = textgrid.TextGrid()
-
-    # parse string data
-    textgrid.parse(some_data)
-
-    # read data from file
-    textgrid.read(filename)
-    # or shorthand
-    textgrid = textgrid.TextGrid(filename)
-
-#### 1.2. Properties
+#### 1.1. Properties
 
 All the properties of `dict`s plus:
 
 * `filename` holds the textgrid filename, if any. `read()` and `write()` methods both set or update it.
 
-#### 1.3. Methods
+#### 1.2. Methods
 
 All the methods of `dict`s plus:
 
@@ -108,7 +95,7 @@ All the methods of `list`s plus:
 
 ### 4. Point
 
-`Point` is a `namedtuple` with two properties, `text` and `xpos`.
+`Point` is a `namedtuple` with two properties: `text` and `xpos`.
 
 #### 4.1. Properties
 
