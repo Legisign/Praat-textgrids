@@ -4,9 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-06-24    r11     Bug fix. New Interval methods startswithvowel(),
-                        containsvowel(). New Transcript class with handy
-                        Praat-to-Unicode and Unicode-to-Praat methods.
+  2019-06-27    r12   setup.py created, PyPI packaging underway.
 
 '''
 
@@ -14,7 +12,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '11'
+version = '12'
 
 # Global variable: Praat-to-Unicode character mappings
 

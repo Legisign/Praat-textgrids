@@ -1,0 +1,17 @@
+  2012-04-18    r1    First workable version.
+  2012-04-19    r2    Added file type check.
+  2016-02-15    r3    Finally beginning to handle point tiers.
+  2018-01-15    r4    Back to the project.
+  2018-04-06    r5    Added selection of tier(s) to print in __main__().
+  2019-06-07    r6    Changed Interval to object in order to have dur() and
+                      mid() convenience methods.
+  2019-06-12    r7    Finally a parser for short-form textgrids. Long-form
+                      may be unfunctional for a while now :)
+  2019-06-12    r8    A new parser for long-form textgrids. A new timegrid()
+                      method for interval tiers.
+  2019-06-16    r9    Bug fix in Interval.timegrid().
+  2019-06-19    r10   A new object layer: Tier. Simple parse error handling.
+  2019-06-24    r11   Bug fix. New Interval methods startswithvowel(),
+                      containsvowel(). New Transcript class with handy
+                      Praat-to-Unicode and Unicode-to-Praat methods.
+  2019-06-27    r12   setup.py created, PyPI packaging underway.
