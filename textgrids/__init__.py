@@ -4,7 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-06-27    r12   setup.py created, PyPI packaging underway.
+  2019-06-27  1.0   r12 declared as 1.0.
 
 '''
 
@@ -12,7 +12,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '12'
+version = '1.0'
 
 # Global variable: Praat-to-Unicode character mappings
 
