@@ -202,7 +202,7 @@ class Interval(object):
 
     def timegrid(self, num=3):
         '''Return even-spaced time grid.'''
-        if num <= 0 or num != int(num):
+        if num <= 1 or num != int(num):
             raise ValueError
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
