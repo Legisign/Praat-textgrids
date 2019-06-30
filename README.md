@@ -118,9 +118,9 @@ All the methods of `str`s plus:
 
 Without arguments, `transcode()` assumes its input to be in Praat notation and converts it to Unicode; no check is made as to whether the input really is in Praat notation but nothing will happen if it isn’t.
 
-Optional `to_unicode=False` argument inverts the direction of the transcoding from Unicode to Praat; again, it is not checked whether to input is in Unicode but no harm will be done if it isn’t.
+Optional `to_unicode=False` argument inverts the direction of the transcoding from Unicode to Praat. Again, it is not checked whether input is in Unicode.
 
-With optional `retain_diacritics=True` argument (only applicable with `to_unicode=True` which is the default direction) to transcoding does not remove over- and understrike diacritics from the transcript.
+With optional `retain_diacritics=True` argument (only applicable with `to_unicode=True` which is the default direction) the transcoding does not remove over- and understrike diacritics from the transcript.
 
 ## Example code
 

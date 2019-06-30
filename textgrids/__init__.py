@@ -4,7 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-06-30  1.01  Bug fix. Vowels lacked 'aeiouyæø'!
+  2019-06-30  1.02  Further bug fix. Added in-line diacritics to symbols.
 
 '''
 
@@ -12,7 +12,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '1.01'
+version = '1.02'
 
 # Global variable: Praat-to-Unicode character mappings
 
@@ -44,7 +44,7 @@ symbols = {r'\i-': '\u0268',        # unrounded close central
 # Vowels in either notation
 vowels = list('aeiouyæø') + list(symbols.keys()) + list(symbols.values())
 
-# Now add the consonants
+# Now add the consonants AND in-line diacritics
 symbols.update({r'\t.': '\u0288',   # voiceless retroflex plosive
                 r'\?-': '\u02a1',   # voiceless epiglottal plosive
                 r'\?g': '\u0294',   # voiceless glottal plosive
@@ -102,7 +102,14 @@ symbols.update({r'\t.': '\u0288',   # voiceless retroflex plosive
                 r'\|2': '\u01c1',   # lateral click
                 r'\|-': '\u01c2',   # palatoalveolar click
                 r'\l~': '\u026b',   # velarized voiced alveolar lateral appr.
-                r'\hj': '\u0267'})  # rounded postalveolar-velar fricative
+                r'\hj': '\u0267',   # rounded postalveolar-velar fricative
+                r'\:f': '\u02d0',   # length mark
+                r'\.f': '\u02d1',   # half-length mark
+                r"\'1": '\u02c8',   # primary stress
+                r"\'2": '\u02cc',   # secondary stress
+                r'\|f': '|',        # “phonetic stroke”
+                r'\cn': '\u031a',   # unreleased
+                r'\er': '\u02de'})  # rhotic
 
 # Diacritics include only over- and understrikes---
 # no need to handle in-line symbols
