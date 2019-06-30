@@ -4,7 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-06-27  1.0   r12 declared as 1.0.
+  2019-06-30  1.01  Bug fix. Vowels lacked 'aeiouyæø'!
 
 '''
 
@@ -12,7 +12,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '1.0'
+version = '1.01'
 
 # Global variable: Praat-to-Unicode character mappings
 
@@ -42,7 +42,7 @@ symbols = {r'\i-': '\u0268',        # unrounded close central
            r'\ab': '\u0252'}        # rounded open back
 
 # Vowels in either notation
-vowels = list(symbols.keys()) + list(symbols.values())
+vowels = list('aeiouyæø') + list(symbols.keys()) + list(symbols.values())
 
 # Now add the consonants
 symbols.update({r'\t.': '\u0288',   # voiceless retroflex plosive
