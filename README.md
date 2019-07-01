@@ -44,9 +44,11 @@ All the methods of `dict`s plus:
 * `tier_from_csv()` -- read a textgrid tier from a CSV file
 * `tier_to_csv()` -- write a textgrid tier into a CSV file
 
-`parse()`, `read()` and `write()` each take a filename argument.
+`parse()` takes an obligatory string argument (Praat-format textgrid data).
 
-`tier_from_csv()` and `tier_to_csv()` both take two obligatory arguments, the tier name and the filename, in that order. A Boolean `point_tier=True` can be given to `tier_from_csv()` to read point tiers.
+`read()` and `write()` each take an obligatory filename argument.
+
+`tier_from_csv()` and `tier_to_csv()` both take two obligatory arguments, the tier name and the filename, in that order.
 
 ### 2. Tier
 
