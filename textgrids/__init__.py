@@ -4,7 +4,8 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-06-30  1.02  Further bug fix. Added in-line diacritics to symbols.
+  2019-07-01  1.0.3   More verbose docstrings. Removed optional argument from
+                      TextGrid.tier_from_csv().
 
 '''
 
@@ -12,7 +13,7 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
-version = '1.02'
+version = '1.0.3'
 
 # Global variable: Praat-to-Unicode character mappings
 
@@ -145,7 +146,7 @@ class ParseError(Exception):
         return 'Parse error on line {}'.format(self.args[0])
 
 class Transcript(str):
-    '''String class with an extra transcode() method.'''
+    '''String class with an extra method for notation transcoding.'''
 
     def transcode(self, to_unicode=True, retain_diacritics=False):
         '''Provide Praat-to-Unicode and Unicode-to-Praat transcoding.
@@ -170,7 +171,11 @@ class Transcript(str):
 Point = namedtuple('Point', ['text', 'xpos'])
 
 class Interval(object):
-    '''Interval is a timeframe xmin..xmax labelled "text".'''
+    '''Interval is a timeframe xmin..xmax labelled "text".
+
+    xmin, xmax are floats, text a string that is converted into a Transcript
+    object.
+    '''
 
     def __init__(self, text=None, xmin=0.0, xmax=0.0):
         self.text = Transcript(text)
@@ -186,27 +191,32 @@ class Interval(object):
                                                              self.xmax)
 
     def containsvowel(self):
-        '''Does the label contain a vowel?'''
+        '''Boolean: Does the label contain a vowel?'''
         global vowels
         return any([vow in self.text for vow in vowels])
 
     @property
     def dur(self):
-        '''Return duration.'''
+        '''Return duration of the Interval.'''
         return self.xmax - self.xmin
 
     @property
     def mid(self):
-        '''Return midpoint in time.'''
+        '''Return temporal midpoint for the Interval.'''
         return self.xmin + self.dur / 2
 
     def startswithvowel(self):
-        '''Does the label start with a vowel?'''
+        '''Boolean: does the label start with a vowel?'''
         global vowels
         return any([self.text.startswith(vow) for vow in vowels])
 
     def timegrid(self, num=3):
-        '''Return even-spaced time grid.'''
+        '''Create an even-spaced time grid.
+
+        Takes one optional integer argument "num", the number of timepoints.
+        Returns a list of timepoints (floats) where the first element is
+        Interval. xmin and the last Interval.xmax.
+        '''
         if num <= 1 or num != int(num):
             raise ValueError
         step = self.dur / num
@@ -229,6 +239,13 @@ class Tier(list):
         super().__add__(elem)
 
     def concat(self, first=0, last=-1):
+        '''Concatenate Intervals Tier[first]...Tier[last].
+
+        first and last follow the usual Python index semantics: starting from
+        0, negative number count from the end.
+
+        The method raises an exception if the Tier is a point tier.
+        '''
         if not self.interval_tier:
             raise TypeError
         area = self[first:last]
@@ -240,7 +257,7 @@ class Tier(list):
             self = self[first:] + new_segm + self[:last]
 
     def to_csv(self):
-        '''Return tier data in CSV-like list.'''
+        '''Return tier data in CSV-like list, each row a separate string.'''
         if self.is_point_tier:
             return ['"{}";{}'.format(t, xp) for t, xp in self]
         else:
@@ -285,7 +302,10 @@ class TextGrid(OrderedDict):
         return '\n'.join([line.replace('\t', '    ') for line in buff])
 
     def parse(self, data):
-        '''Parse short or long text-mode TextGrids.'''
+        '''Parse short or long text-mode TextGrids.
+
+        Obligatory argument "data" is a string.
+        '''
         filetype, objclass, separ = data[:3]
         if filetype != 'File type = "ooTextFile"' or \
            objclass != 'Object class = "TextGrid"' or \
@@ -400,7 +420,10 @@ class TextGrid(OrderedDict):
                     mode = 'xmin'
 
     def read(self, filename):
-        '''Read a file as a TextGrid.'''
+        '''Read given file as a TextGrid.
+
+        "filename" is the name of the file.
+        '''
         self.filename = filename
         # Praat uses UTF-16 or UTF-8 with no apparent pattern
         try:
@@ -411,28 +434,49 @@ class TextGrid(OrderedDict):
                 buff = [line.strip() for line in infile]
         self.parse(buff)
 
-    def tier_from_csv(self, tier_name, filename, point_tier=False):
-        '''Import CSV file to an interval or point tier.'''
+    def tier_from_csv(self, tier_name, filename):
+        '''Import CSV file to an interval or point tier.
+
+        "tier_name" (string) is the name for the new tier.
+        "filename" (string) is the name of the input file.
+        '''
         import csv
-        tier = Tier(point_tier=point_tier)
+        tier = None
         with open(filename, 'r') as csvfile:
             reader = csv.reader(csvfile, delimiter=';')
             for line in reader:
-                if point_tier:
+                if len(line) == 2:
                     text, xpos = line
-                    tier.append(Point(text, xpos))
-                else:
+                    elem = Point(text, xpos)
+                elif len(line) == 3:
                     text, xmin, xmax = line
-                    tier.append(Interval(text, xmin, xmax))
+                    elem = Interval(text, xmin, xmax)
+                else:
+                    raise ValueError
+                if not tier:
+                    if isinstance(elem, Point):
+                        tier = Tier(point_tier=True)
+                    else:
+                        tier = Tier()
+                # The following raises an exception if the CSV file contains
+                # both intervals and points
+                tier.append(elem)
         self[tier_name] = tier
 
     def tier_to_csv(self, tier_name, filename):
-        '''Export given tier into a CSV file.'''
+        '''Export given tier into a CSV file.
+
+        "tier_name" is the name of the (existing) tier to be exported.
+        "filename" is the name of the file.
+        '''
         with open(filename, 'w') as csvfile:
             csvfile.write('\n'.join(self[tier_name].csv()))
 
     def write(self, filename):
-        '''Write the text grid into a Praat TextGrid file.'''
+        '''Write the text grid into a Praat TextGrid file.
+
+        "filename" is the name of the file.
+        '''
         with open(filename, 'w') as f:
             f.write(str(self))
 
@@ -448,7 +492,7 @@ if __name__ == '__main__':
     E_PERMS = 'No permission to read: "{}"'
 
     if len(sys.argv) == 1:
-        print('Usage: textgrids FILE...')
+        print('Usage: {} FILE...'.format(sys.argv[0]))
         sys.exit(0)
 
     for arg in sys.argv[1:]:
