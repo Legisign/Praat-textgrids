@@ -15,6 +15,8 @@ All Praat text objects are represented as `Transcript` objects.
 The module also exports the following variables:
 
 * `diacritics` -- a `dict` of all under- and overstrike diacritics with their Unicode counterparts
+* `inline_diacritics` -- a `dict` of inline (symbol-like) diacritics
+* `index_diacritics` -- a `dict` of over/understrike diacritics
 * `symbols` -- a `dict` of special Praat symbols with their Unicode counterparts
 * `version` -- module version as string
 * `vowels` -- a `list` of all vowels in either Praat or Unicode notation
@@ -47,11 +49,11 @@ Besides `textgrids.version`, which contains the module version number as string,
 
 `vowels` is a `list` of all vowel symbols in either Praat notation (e.g., `"\as"`) or in Unicode. It is used by `Interval` methods `containsvowel()` and `startswithvowel()`, so changing it, for example, adding new symbols to it or removing symbols used for other purposes in a specific case, will change how those methods function.
 
-#### 0.3. diacritics
+#### 0.3. diacritics, inline_diacritics, and index_diacritics
 
-`diacritics` is a `dict` of all under- or overstrike diacritics in Praat notation (as keys) and their Unicode counterparts (as values).
+`diacritics` is a `dict` of all diacritics in Praat notation (as keys) and their Unicode counterparts (as values).
 
-**IMPORTANT:** It might be considered a **BUG** that `diacritics` does not include inline diacritics such as the length sign (Praat `"\:f"`). The reason for this was originally that calling `Transcript.transcode()` with optional `retain_diacritics=True` argument was intended to handle only those over- and understrike diacritics that might cause problems for `matplotlib.pyplot` graphs. However, this also makes it more difficult to implement a `Interval.endswithvowel()` method, so the implementation may change in the future.
+`inline_diacritics` and `index_diacritics` are subsets of `diacritics`. The former are semantically diacritics but appear as inline symbols, the latter are the “true” diacritics (i.e., under- or overstrikes) that need special handling when transcoding.
 
 ### 1. TextGrid
 
@@ -122,7 +124,7 @@ All the methods of `list`s plus:
 
 `containsvowel()` and `startswithvowel()` check for possible vowels in both Praat notation and Unicode but can of course make an error if symbols are used in an unexpected way. They don’t take arguments.
 
-**NOTE:** Cf. the note at the end of section 0.3 as for why there is no `endswithvowel()` as perhaps might be expected.
+**NOTE:** At the moment there is no `endswithvowel()` as might perhaps be expected. This is a result of an early implementation bug and might get corrected in the future.
 
 `timegrid()` returns a list of timepoints (in `float`) evenly distributed from `xmin` to `xmax`. It takes an optional integer argument specifying the number of timepoints desired; the default is 3. It raises a `ValueError` if the argument is not an integer or is less than 1.
 
@@ -149,11 +151,11 @@ All the methods of `str`s plus:
 
 * `transcode()` -- convert Praat notation to Unicode or vice versa.
 
-Without arguments, `transcode()` assumes its input to be in Praat notation and converts it to Unicode; no check is made as to whether the input really is in Praat notation but nothing will happen if it isn’t.
+Without arguments, `transcode()` assumes its input to be in Praat notation and converts it to Unicode; no check is made as to whether the input really is in Praat notation but nothing **should** happen if it isn’t. User should take care and handle any exceptions.
 
 Optional `to_unicode=False` argument inverts the direction of the transcoding from Unicode to Praat. Again, it is not checked whether input is in Unicode.
 
-With optional `retain_diacritics=True` argument (only applicable with `to_unicode=True` which is the default direction) the transcoding does not remove over- and understrike diacritics from the transcript.
+With optional `retain_diacritics=True` argument the transcoding does not remove over- and understrike diacritics from the result.
 
 ## Example code
 
