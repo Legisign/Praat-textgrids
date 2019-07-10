@@ -21,7 +21,7 @@ The module also exports the following variables:
 
 ## Version
 
-This file documents `praat-textgrids` version 1.0.3.
+This file documents `praat-textgrids` version 1.1.0.
 
 ## Copyright
 

@@ -3,3 +3,9 @@
   2019-06-30  1.0.2   Further bug fix. Added in-line diacritics to symbols.
   2019-07-01  1.0.3   More verbose docstrings. Removed optional argument from
                       TextGrid.tier_from_csv().
+  2019-07-10  1.1.0   When retain_diacritics=True, Transcript.transcode() now
+                      works as it should: in Praat notation, over/understrikes
+                      follow the symbol, in Unicode, they precede it. This
+                      requires some swapping of characters. This also means
+                      that besides ‘diacritics’ variable there are also
+                      ‘inline_diacritics’ and ‘index_diacritics’.

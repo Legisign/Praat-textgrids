@@ -4,8 +4,12 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-07-01  1.0.3   More verbose docstrings. Removed optional argument from
-                      TextGrid.tier_from_csv().
+  2019-07-10  1.1.0   When retain_diacritics=True, Transcript.transcode() now
+                      works as it should: in Praat notation, over/understrikes
+                      follow the symbol, in Unicode, they precede it. This
+                      requires some swapping of characters. This also means
+                      that besides ‘diacritics’ variable there are also
+                      ‘inline_diacritics’ and ‘index_diacritics’.
 
 '''
 
@@ -13,9 +17,11 @@ import codecs
 import re
 from collections import OrderedDict, namedtuple
 
+# Global constant
+
 version = '1.0.3'
 
-# Global variable: Praat-to-Unicode character mappings
+# Global variables
 
 # Symbol table
 # (only vowels are added first in order to get the ’vowels’ variable)
@@ -103,43 +109,47 @@ symbols.update({r'\t.': '\u0288',   # voiceless retroflex plosive
                 r'\|2': '\u01c1',   # lateral click
                 r'\|-': '\u01c2',   # palatoalveolar click
                 r'\l~': '\u026b',   # velarized voiced alveolar lateral appr.
-                r'\hj': '\u0267',   # rounded postalveolar-velar fricative
-                r'\:f': '\u02d0',   # length mark
-                r'\.f': '\u02d1',   # half-length mark
-                r"\'1": '\u02c8',   # primary stress
-                r"\'2": '\u02cc',   # secondary stress
-                r'\|f': '|',        # “phonetic stroke”
-                r'\cn': '\u031a',   # unreleased
-                r'\er': '\u02de'})  # rhotic
+                r'\hj': '\u0267'})  # rounded postalveolar-velar fricative
 
-# Diacritics include only over- and understrikes---
-# no need to handle in-line symbols
-diacritics = {r'\|v': '\u0329',     # syllabic (understrike)
-              r'\0v': '\u0325',     # voiceless (understrike)
-              r'\Tv': '\u031e',     # lowered (understrike)
-              r'\T^': '',           # raised (understrike)
-              r'\T(': '\u0318',     # ATR (understrike)
-              r'\T)': '\u0319',     # RTR (understrike)
-              r'\-v': '\u0320',     # backed (understrike)
-              r'\+v': '\u031f',     # fronted (understrike)
-              r'\:v': '\u0324',     # breathy voiced (understrike)
-              r'\~v': '\u0330',     # creaky voiced (understrike)
-              r'\Nv': '\u032a',     # dental (understrike)
-              r'\Uv': '\u033a',     # apical (understrike)
-              r'\Dv': '\u033b',     # laminal (understrike)
-              r'\nv': '\u032f',     # nonsyllabic (understrike)
-              r'\3v': '\u0339',     # slightly rounded (understrike)
-              r'\cv': '\u031c',     # slightly unrounded (understrike)
-              r'\0^': '\u030a',     # voiceless (overstrike)
-              r"\'^": '\u0301',     # high tone (overstrike)
-              r'\`^': '\u0300',     # low tone (overstrike)
-              r'\-^': '\u0304',     # mid tone (overstrike)
-              r'\~^': '\u0303',     # nasalized (overstrike)
-              r'\v^': '\u030c',     # rising tone (overstrike)
-              r'\^^': '\u0302',     # falling tone (overstrike)
-              r'\:^': '\u0308',     # centralized (overstrike)
-              r'\N^': '\u0306',     # short (overstrike)
-              r'\li': '\u0361'}     # simultaneous articulation (overstrike)
+inline_diacritics = {r'\:f': '\u02d0',      # length mark
+                     r'\.f': '\u02d1',      # half-length mark
+                     r"\'1": '\u02c8',      # primary stress
+                     r"\'2": '\u02cc',      # secondary stress
+                     r'\|f': '|',           # “phonetic stroke”
+                     r'\cn': '\u031a',      # unreleased
+                     r'\er': '\u02de'}      # rhotic
+
+index_diacritics = {r'\|v': '\u0329',     # syllabic (under)
+                    r'\0v': '\u0325',     # voiceless (under)
+                    r'\Tv': '\u031e',     # lowered (under)
+                    r'\T^': '\u031d',     # raised (under)
+                    r'\T(': '\u0318',     # ATR (under)
+                    r'\T)': '\u0319',     # RTR (under)
+                    r'\-v': '\u0320',     # backed (under)
+                    r'\+v': '\u031f',     # fronted (under)
+                    r'\:v': '\u0324',     # breathy voiced (under)
+                    r'\~v': '\u0330',     # creaky voiced (under)
+                    r'\Nv': '\u032a',     # dental (under)
+                    r'\Uv': '\u033a',     # apical (under)
+                    r'\Dv': '\u033b',     # laminal (under)
+                    r'\nv': '\u032f',     # nonsyllabic (under)
+                    r'\3v': '\u0339',     # slightly rounded (under)
+                    r'\cv': '\u031c',     # slightly unrounded (under)
+                    r'\0^': '\u030a',     # voiceless (over)
+                    r"\'^": '\u0301',     # high tone (over)
+                    r'\`^': '\u0300',     # low tone (over)
+                    r'\-^': '\u0304',     # mid tone (over)
+                    r'\~^': '\u0303',     # nasalized (over)
+                    r'\v^': '\u030c',     # rising tone (over)
+                    r'\^^': '\u0302',     # falling tone (over)
+                    r'\:^': '\u0308',     # centralized (over)
+                    r'\N^': '\u0306',     # short (over)
+                    r'\li': '\u0361'}     # simultaneous articulation (over)
+
+# There’s a neater way of combining dicts in Python 3.5+,
+# but we can’t assume the user has that
+diacritics = inline_diacritics.copy()
+diacritics.update(index_diacritics)
 
 class ParseError(Exception):
     def __str__(self):
@@ -151,20 +161,65 @@ class Transcript(str):
     def transcode(self, to_unicode=True, retain_diacritics=False):
         '''Provide Praat-to-Unicode and Unicode-to-Praat transcoding.
 
-        Unless to_unicode is False, Praat-to-Unicode is assumed.
-        By default removes diacritics (usually best practice for pictures).
+        Unless to_unicode is False, Praat-to-Unicode is assumed, otherwise
+        Unicode-to-Praat.
+
+        If retain_diacritics is False (the default), removes over/understrike
+        (i.e., “index”) diacritics (usually best practice for graphs).
         '''
-        global symbols, diacritics
+        global symbols, inline_diacritics, index_diacritics
+
         out = str(self)
-        for key, val in symbols.items():
-            if to_unicode and (key in out):
-                out = out.replace(key, val)
-            elif (not to_unicode) and (val in out):
-                out = out.replace(val, key)
-        for key, val in diacritics.items():
-            if not retain_diacritics:
-                val = ''
-            out = out.replace(key, val)
+
+        # First stage (only when Unicode-to-Praat): if retaining
+        # index diacritics, swap them to follow their symbols,
+        # otherwise remove them
+        if not to_unicode:
+            # print('in = "{}"'.format([c for c in out]))
+            if retain_diacritics:
+                for uni in index_diacritics.values():
+                    p = out.find(uni)
+                    while p >= 0:
+                        out = out[:p] + out[p + 1] + out[p] + out[p + 2:]
+                        p = out.find(uni, p + 2)
+                        # print('mid = "{}'.format([c for c in out]))
+            else:
+                for uni in index_diacritics.values():
+                    out = out.replace(uni, '')
+            # print('out = "{}"'.format([c for c in out]))
+
+        # Second stage: change INLINE symbols (diacritics included)
+        # (there’s a neater way of combining dicts in Python 3.5+,
+        # but we can’t assume the user has that)
+        inline_symbols = symbols.copy()
+        inline_symbols.update(inline_diacritics)
+        for praat, uni in inline_symbols.items():
+            if to_unicode:
+                out = out.replace(praat, uni)
+            else:
+                out = out.replace(uni, praat)
+
+        # Third stage (only when Praat-to-Unicode and retaining diacritics):
+        # swap the index diacritics to precede their symbols
+        if to_unicode and retain_diacritics:
+            for praat in index_diacritics:
+                p = 0
+                while out.find(praat, p) > 0:
+                    p = out.index('\\')
+                    out = out[:p - 1] + \
+                          index_diacritics[out[p:p + 3]] + \
+                          out[p - 1] + \
+                          out[p + 3:]
+                    p += 2
+
+        # Fourth stage: change index diacritics
+        # (unless already removed in the first stage)
+        for praat, uni in index_diacritics.items():
+            if to_unicode:
+                out = out.replace(praat, uni if retain_diacritics else '')
+            elif retain_diacritics:
+                out = out.replace(uni, praat)
+
         return out
 
 # Point class
