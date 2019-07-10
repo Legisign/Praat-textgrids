@@ -12,6 +12,17 @@
 
 All Praat text objects are represented as `Transcript` objects.
 
+The module also exports the following variables:
+
+* `diacritics` -- a `dict` of all under- and overstrike diacritics with their Unicode counterparts
+* `symbols` -- a `dict` of special Praat symbols with their Unicode counterparts
+* `version` -- module version as string
+* `vowels` -- a `list` of all vowels in either Praat or Unicode notation
+
+## Version
+
+This file documents `praat-textgrids` version 1.0.3.
+
 ## Copyright
 
 Copyright © 2019 Legisign.org, Tommi Nieminen <software@legisign.org>
@@ -23,6 +34,24 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Module contents
+
+### 0. Module properties
+
+Besides `textgrids.version`, which contains the module version number as string, the module exports the following properties:
+
+#### 0.1. symbols
+
+`symbols` is a `dict` that contains all the Praat special notation symbols (as keys) and their Unicode counterparts (as values).
+
+#### 0.2. vowels
+
+`vowels` is a `list` of all vowel symbols in either Praat notation (e.g., `"\as"`) or in Unicode. It is used by `Interval` methods `containsvowel()` and `startswithvowel()`, so changing it, for example, adding new symbols to it or removing symbols used for other purposes in a specific case, will change how those methods function.
+
+#### 0.3. diacritics
+
+`diacritics` is a `dict` of all under- or overstrike diacritics in Praat notation (as keys) and their Unicode counterparts (as values).
+
+**IMPORTANT:** It might be considered a **BUG** that `diacritics` does not include inline diacritics such as the length sign (Praat `"\:f"`). The reason for this was originally that calling `Transcript.transcode()` with optional `retain_diacritics=True` argument was intended to handle only those over- and understrike diacritics that might cause problems for `matplotlib.pyplot` graphs. However, this also makes it more difficult to implement a `Interval.endswithvowel()` method, so the implementation may change in the future.
 
 ### 1. TextGrid
 
@@ -92,6 +121,8 @@ All the methods of `list`s plus:
 * `timegrid()` -- create a grid of even time slices
 
 `containsvowel()` and `startswithvowel()` check for possible vowels in both Praat notation and Unicode but can of course make an error if symbols are used in an unexpected way. They don’t take arguments.
+
+**NOTE:** Cf. the note at the end of section 0.3 as for why there is no `endswithvowel()` as perhaps might be expected.
 
 `timegrid()` returns a list of timepoints (in `float`) evenly distributed from `xmin` to `xmax`. It takes an optional integer argument specifying the number of timepoints desired; the default is 3. It raises a `ValueError` if the argument is not an integer or is less than 1.
 
