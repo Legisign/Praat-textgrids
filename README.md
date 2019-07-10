@@ -14,7 +14,7 @@ All Praat text objects are represented as `Transcript` objects.
 
 The module also exports the following variables:
 
-* `diacritics` -- a `dict` of all under- and overstrike diacritics with their Unicode counterparts
+* `diacritics` -- a `dict` of all diacritics with their Unicode counterparts
 * `inline_diacritics` -- a `dict` of inline (symbol-like) diacritics
 * `index_diacritics` -- a `dict` of over/understrike diacritics
 * `symbols` -- a `dict` of special Praat symbols with their Unicode counterparts
