@@ -2,7 +2,7 @@
 
 ## Description
 
-`textgrids` is a module for handling Praat short or long text-file TextGrid files. It implements five classes. From largest to smallest:
+`textgrids` is a module for handling Praat short or long text-format TextGrid files. It implements five classes. From largest to smallest:
 
 * `TextGrid` -- a `dict` with tier names as keys and `Tier`s as values
 * `Tier` -- a `list` of either `Interval` or `Point` objects
