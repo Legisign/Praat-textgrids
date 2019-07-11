@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-'''textgrids -- Read and handle Praat’s (long) TextGrids
+'''textgrids -- Read and handle Praat’s textgrid files
 
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-07-11  1.1.1   Separated Transcript in a submodule.
+  2019-07-11  1.2.0   Read binary textgrids.
 
 '''
 
 import codecs
 import re
+import struct
 from collections import OrderedDict, namedtuple
 from .transcript import *
 
 # Global constant
 
-version = '1.1.1'
+version = '1.2.0'
 
 class ParseError(Exception):
     def __str__(self):
@@ -155,20 +156,24 @@ class TextGrid(OrderedDict):
                 tier_count += 1
         return '\n'.join([line.replace('\t', '    ') for line in buff])
 
-    def parse(self, data):
-        '''Parse short or long text-mode TextGrids.
+    def parse(self, data, binary=False):
+        '''Parse textgrid data.
 
-        Obligatory argument "data" is a string.
+        Obligatory argument "data" is either str or bytes. Optional argument
+        "binary" is required when parsing binary data.
         '''
-        filetype, objclass, separ = data[:3]
-        if filetype != 'File type = "ooTextFile"' or \
-           objclass != 'Object class = "TextGrid"' or \
-           separ != '':
-           raise ParseError
-        if re.match('^-?\d+.?\d*$', data[3]):
-            self._parse_short(data[3:])
+        if binary:
+            self._parse_binary(data)
         else:
-            self._parse_long(data[3:])
+            filetype, objclass, separ = data[:3]
+            if filetype != 'File type = "ooTextFile"' or \
+               objclass != 'Object class = "TextGrid"' or \
+               separ != '':
+               raise ParseError
+            if re.match('^-?\d+.?\d*$', data[3]):
+                self._parse_short(data[3:])
+            else:
+                self._parse_long(data[3:])
 
     def _parse_long(self, data):
         '''Parse LONG textgrid files. Not meant to be used directly.'''
@@ -230,7 +235,7 @@ class TextGrid(OrderedDict):
         self.xmin, self.xmax = [float(num) for num in data[:2]]
         if data[2] != '<exists>':
             return
-        tier = []
+        # tier = []
         mode = 'type'
         for lineno, line in enumerate(data[4:], 8):
             if mode == 'type':
@@ -273,20 +278,66 @@ class TextGrid(OrderedDict):
                 else:
                     mode = 'xmin'
 
-    def read(self, filename):
+    def _parse_binary(self, data):
+        '''Parse BINARY textgrid files. Not meant to be used directly.'''
+        signature = b'ooBinaryFile\x08TextGrid'
+        sBool, sByte, sShort, sInt, sDouble = [struct.calcsize(c) for c in '?Bhid']
+
+        if infile.read(len(signature)) != signature:
+            raise ParseError
+
+        self.xmin, self.xmax = struct.unpack('>2d', infile.read(2 * sDouble))
+        if not struct.unpack('?', infile.read(sBool))[0]:
+            raise ParseError
+
+        tiers = struct.unpack('>i', infile.read(sInt))[0]
+        for i in range(tiers):
+            size = struct.unpack('B', infile.read(sByte))[0]
+            desc = infile.read(size)
+            if desc == b'PointTier':
+                point_tier = True
+            elif desc == b'IntervalTier':
+                point_tier = False
+            else:
+                raise ParseError
+            tier = Tier(point_tier=point_tier)
+            size = struct.unpack('>h', infile.read(sShort))[0]
+            tier_name = infile.read(size).decode()
+            # Discard tier xmin, xmax as redundant
+            infile.read(2 * sDouble)
+            elems = struct.unpack('>i', infile.read(sInt))[0]
+            for j in range(elems):
+                if point_tier:
+                    xpos = struct.unpack('>d', infile.read(sDouble))[0]
+                else:
+                    xmin, xmax = struct.unpack('>2d', infile.read(2 * sDouble))
+                size = struct.unpack('>h', infile.read(sShort))[0]
+                text = Transcript(infile.read(size).decode())
+                if point_tier:
+                    tier.append(Point(text, xpos))
+                else:
+                    tier.append(Interval(text, xmin, xmax))
+            self[tier_name] = tier
+
+    def read(self, filename, binary=False):
         '''Read given file as a TextGrid.
 
         "filename" is the name of the file.
         '''
         self.filename = filename
-        # Praat uses UTF-16 or UTF-8 with no apparent pattern
-        try:
-            with codecs.open(self.filename, 'r', 'UTF-16') as infile:
-                buff = [line.strip() for line in infile]
-        except UnicodeError:
-            with open(self.filename, 'r') as infile:
-                buff = [line.strip() for line in infile]
-        self.parse(buff)
+        if binary:
+            with open(self.filename, 'rb') as infile:
+                buff = infile.read()
+            self.parse(buff, binary=True)
+        else:
+            # Praat uses UTF-16 or UTF-8 with no apparent pattern
+            try:
+                with codecs.open(self.filename, 'r', 'UTF-16') as infile:
+                    buff = [line.strip() for line in infile]
+            except UnicodeError:
+                with open(self.filename, 'r') as infile:
+                    buff = [line.strip() for line in infile]
+            self.parse(buff)
 
     def tier_from_csv(self, tier_name, filename):
         '''Import CSV file to an interval or point tier.

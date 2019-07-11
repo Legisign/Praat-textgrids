@@ -10,3 +10,4 @@
                       that besides ‘diacritics’ variable there are also
                       ‘inline_diacritics’ and ‘index_diacritics’.
   2019-07-11  1.1.1   Separated Transcript in a submodule.
+  2019-07-11  1.2.0   Read binary textgrids.
