@@ -288,7 +288,7 @@ class TextGrid(OrderedDict):
 
         self.xmin, self.xmax = struct.unpack('>2d', infile.read(2 * sDouble))
         if not struct.unpack('?', infile.read(sBool))[0]:
-            raise ParseError
+            return
 
         tiers = struct.unpack('>i', infile.read(sInt))[0]
         for i in range(tiers):
