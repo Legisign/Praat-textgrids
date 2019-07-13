@@ -22,6 +22,7 @@
    2019-06-27 -- setup.py created, packaging underway.
    2019-06-30 -- bug fixes (including the date in the above line!).
    2019-07-11 -- separation of Transcript.
+   2019-07-13 -- binary files accepted.
 
 '''
 
@@ -31,7 +32,7 @@ with open('README.md', 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.1.1',
+                 version='1.2.0',
                  description='Manipulation of Praat text-format TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',

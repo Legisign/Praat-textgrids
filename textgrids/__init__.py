@@ -121,11 +121,11 @@ class Tier(list):
 class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
-    def __init__(self, read_file=None):
+    def __init__(self, filename=None, binary=False):
         super().__init__({})
-        self.filename = read_file
+        self.filename = filename
         if self.filename:
-            self.read(self.filename)
+            self.read(self.filename, binary)
 
     def __repr__(self):
         '''Return Praat (long) text format representation'''
