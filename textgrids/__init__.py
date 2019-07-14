@@ -312,7 +312,13 @@ class TextGrid(OrderedDict):
                 else:
                     xmin, xmax = struct.unpack('>2d', infile.read(2 * sDouble))
                 size = struct.unpack('>h', infile.read(sShort))[0]
-                text = Transcript(infile.read(size).decode())
+                # Apparently size -1 is an index that UTF-16 follows
+                if size == -1:
+                    size = struct.unpack('>h', infile.read(sShort))[0] * 2
+                    coding = 'utf-16-be'
+                else:
+                    coding = 'ascii'
+                text = Transcript(infile.read(size).decode(coding))
                 if point_tier:
                     tier.append(Point(text, xpos))
                 else:
