@@ -278,7 +278,7 @@ class TextGrid(OrderedDict):
                 else:
                     mode = 'xmin'
 
-    def _parse_binary(self, data):
+    def _parse_binary(self, infile):
         '''Parse BINARY textgrid files. Not meant to be used directly.'''
         signature = b'ooBinaryFile\x08TextGrid'
         sBool, sByte, sShort, sInt, sDouble = [struct.calcsize(c) for c in '?Bhid']
@@ -327,8 +327,7 @@ class TextGrid(OrderedDict):
         self.filename = filename
         if binary:
             with open(self.filename, 'rb') as infile:
-                buff = infile.read()
-            self.parse(buff, binary=True)
+                self.parse(infile, binary=True)
         else:
             # Praat uses UTF-16 or UTF-8 with no apparent pattern
             try:
