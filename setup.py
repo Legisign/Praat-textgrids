@@ -23,6 +23,8 @@
    2019-06-30 -- bug fixes (including the date in the above line!).
    2019-07-11 -- separation of Transcript.
    2019-07-13 -- binary files accepted.
+   2019-07-15 -- no binary= argument needed anywhere, ability to format
+                 the data and write it out in any format.
 
 '''
 
@@ -32,7 +34,7 @@ with open('README.md', 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.2.0',
+                 version='1.3.0',
                  description='Manipulation of Praat text-format TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
