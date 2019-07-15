@@ -4,16 +4,19 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-07-15  1.3.0   Simplify text-file parsers and get rid of the optional
+  2019-07-15  1.3.0   Simplified text-file parsers and got rid of the optional
                       binary= parameter for TextGrid.parse() and
-                      TextGrid.read().
+                      TextGrid.read(). Also new TextGrid.format() and the
+                      ability to write files in any of the formats.
 
 '''
 
 import codecs
 import io
+import struct
 from collections import OrderedDict, namedtuple
 from .transcript import *
+from .templates import *
 
 # Global constant
 
@@ -130,32 +133,107 @@ class TextGrid(OrderedDict):
 
     def __repr__(self):
         '''Return Praat (long) text format representation'''
-        buff = ['File type = "ooTextFile"',
-                'Object class = "TextGrid"',
-                '']
-        if self:
-            xmin = min([intervals[0].xmin for intervals in self.values()])
-            xmax = max([intervals[-1].xmax for intervals in self.values()])
-            buff += ['xmin = {}'.format(xmin),
-                     'xmax = {}'.format(xmax),
-                     'tiers? <exists>',
-                     'size = {}'.format(len(self)),
-                     'item []:']
-            tier_count = 1
-            for tier, intervals in self.items():
-                buff += ['\titem [{}]:'.format(tier_count),
-                        '\t\tclass = "IntervalTier"',
-                        '\t\tname = "{}"'.format(tier),
-                        '\t\txmin = {}'.format(intervals[0].xmin),
-                        '\t\txmax = {}'.format(intervals[-1].xmax),
-                        '\t\tintervals: size = {}'.format(len(intervals))]
-                for index, interval in enumerate(intervals):
-                    buff += ['\t\tintervals [{}]:'.format(index + 1),
-                            '\t\t\txmin = {}'.format(interval.xmin),
-                            '\t\t\txmax = {}'.format(interval.xmax),
-                            '\t\t\ttext = "{}"'.format(interval.text)]
-                tier_count += 1
-        return '\n'.join([line.replace('\t', '    ') for line in buff])
+        return self.format()
+
+    def format(self, formatting=TEXT_LONG):
+        '''Format data as long text, short text, or binary.
+
+        The optional argument can be TEXT_LONG (or 0) for long text,
+        TEXT_SHORT (or 1) for short text, or BINARY (or 2) for binary.
+        '''
+        global BINARY, TEXT_LONG, TEXT_SHORT
+        if formatting == TEXT_LONG:
+            return(_format_long(self))
+        elif formatting == TEXT_SHORT:
+            return(_format_short(self))
+        elif formatting == BINARY:
+            return(_format_binary(self))
+        else:
+            raise ValueError
+
+    def _format_binary(self):
+        '''Format self as binary. Not intended to be used directly.'''
+        out = b'ooBinaryFile\x08TextGrid'
+        out += struct.pack('>2d', self.xmin, self.xmax)
+        out += struct.pack('?', True)
+        out += struct.pack('>i', len(self))
+        for tier, elems in self.items():
+            desc = b'PointTier' if tier.is_point_tier else b'IntervalTier'
+            out += struct.pack('B', len(desc))
+            out += desc
+            try:
+                name = bytes(tier, encoding='ascii')
+                out += struct.pack('>h', len(tier))
+            except UnicodeEncodeError:
+                name = bytes(tier, encoding='utf-16-be')
+                out += struct.pack('>2h', -1, len(tier))
+            out += struct.pack('>2d', self.xmin, self.xmax)
+            out += struct.pack('>i', len(elems))
+            for elem in elems:
+                try:
+                    text = bytes(elem.text, encoding='ascii')
+                    utf16 = False
+                except UnicodeEncodeError:
+                    text = bytes(elem.text, encoding='utf-16-be')
+                    utf16 = True
+                if tier.is_point_tier:
+                    out += struct.pack('>d', elem.xpos)
+                else:
+                    out += struct.pack('>2d', elem.xmin, elem.xmax)
+                if utf16:
+                    out += struct.pack('>2h', -1, len(elem.text))
+                else:
+                    out += struct.pack('>h', len(elem.text))
+                out += text
+        return out
+
+    def _format_long(self):
+        '''Format self as long text. Not intended to be used directly.'''
+        global long_header, long_tier, long_point, long_interval
+        out = long_header.format(self.xmin, self.xmax, len(self))
+        tier_count = 1
+        for tier, elems in self.items():
+            if tier.is_point_tier:
+                tier_type = 'PointTier'
+                elem_type = 'points'
+            else:
+                tier_type = 'IntervalTier'
+                elem_type = 'intervals'
+            out += long_tier.format(tier_count,
+                                    tier_type,
+                                    tier,
+                                    self.xmin,
+                                    self.xmax,
+                                    elem_type,
+                                    len(elems))
+            for elem_count, elem in enumerate(elems, 1):
+                if tier.is_point_tier:
+                    out += long_point.format(elem_count,
+                                             elem.xpos,
+                                             elem.text)
+                else:
+                    out += long_interval.format(elem_count,
+                                                elem.xmin,
+                                                elem.xmax,
+                                                elem.text)
+        return out
+
+    def _format_short(self):
+        '''Format self as short text. Not intended to be used directly.'''
+        global short_header, short_tier, short_point, short_interval
+        out = short_header.format(self.xmin, self.xmax, len(self))
+        for tier, elements in self.items():
+            if tier.is_point_tier:
+                out += '"PointTier"'
+            else:
+                out += '"IntervalTier"'
+            out += short_tier.format(tier, self.xmin, self.xmax, len(tier))
+            for elem in elements:
+                if tier.is_point_tier:
+                    out += short_point.format(elem.xpos, elem.text)
+                else:
+                    out += long_point.format(elem.xmin, elem.xmax, elem.text)
+        return out
 
     def parse(self, data):
         '''Parse textgrid data.
@@ -189,34 +267,35 @@ class TextGrid(OrderedDict):
                 self._parse_long(buff)
 
     def _parse_long(self, data):
-        '''Parse LONG textgrid files. Not meant to be used directly.'''
-        grok = lambda s: s.split(' = ')[1]
-        self.xmin, self.xmax = [float(grok(s)) for s in data[:2]]
+        '''Parse LONG textgrid files. Not intended to be used directly.'''
+        grab = lambda s: s.split(' = ')[1]
+        self.xmin, self.xmax = [float(grab(s)) for s in data[:2]]
         if data[2] != 'tiers? <exists>':
             return
-        tiers = int(grok(data[3]))
+        tiers = int(grab(data[3]))
         p = 6
         for i in range(tiers):
-            tier_type, tier_name = [grok(s).strip('"') for s in data[p:p + 2]]
+            tier_type, tier_name = [grab(s).strip('"') for s in data[p:p + 2]]
             tier = Tier(point_tier=(tier_type != 'IntervalTier'))
-            tier_xmin, tier_xmax = [float(grok(s)) for s in data[p + 2:p + 4]]
-            tier_len = int(grok(data[p + 4]))
+            p += 2
+            tier_xmin, tier_xmax = [float(grab(s)) for s in data[p:p + 2]]
+            tier_len = int(grab(data[p + 4]))
             p += 6
             for j in range(tier_len):
                 if tier.is_point_tier:
-                    x1 = float(grok(data[p]))
-                    text = Transcript(grok(data[p + 1]).strip('"'))
+                    x1 = float(grab(data[p]))
+                    text = Transcript(grab(data[p + 1]).strip('"'))
                     tier.append(Point(text, x1))
                     p += 3
                 else:
-                    x0, x1 = [float(grok(s)) for s in data[p:p + 2]]
-                    text = Transcript(grok(data[p + 2]).strip('"'))
+                    x0, x1 = [float(grab(s)) for s in data[p:p + 2]]
+                    text = Transcript(grab(data[p + 2]).strip('"'))
                     tier.append(Interval(text, x0, x1))
                     p += 4
             self[tier_name] = tier
 
     def _parse_short(self, data):
-        '''Parse SHORT textgrid files. Not meant to be used directly.'''
+        '''Parse SHORT textgrid files. Not intended to be used directly.'''
         self.xmin, self.xmax = [float(s) for s in data[:2]]
         if data[2] != '<exists>':
             return
@@ -246,9 +325,7 @@ class TextGrid(OrderedDict):
             self[tier_name] = tier
 
     def _parse_binary(self, data):
-        '''Parse BINARY textgrid files. Not meant to be used directly.'''
-        import struct
-
+        '''Parse BINARY textgrid files. Not intended to be used directly.'''
         sBool, sByte, sShort, sInt, sDouble = [struct.calcsize(c) for c in '?Bhid']
 
         self.xmin, self.xmax = struct.unpack('>2d', data.read(2 * sDouble))
@@ -324,8 +401,7 @@ class TextGrid(OrderedDict):
                         tier = Tier(point_tier=True)
                     else:
                         tier = Tier()
-                # The following raises an exception if the CSV file contains
-                # both intervals and points
+                # The following may raise a TypeError
                 tier.append(elem)
         self[tier_name] = tier
 
@@ -338,13 +414,20 @@ class TextGrid(OrderedDict):
         with open(filename, 'w') as csvfile:
             csvfile.write('\n'.join(self[tier_name].csv()))
 
-    def write(self, filename):
+    def write(self, filename, formatting=LONG_TEXT):
         '''Write the text grid into a Praat TextGrid file.
 
-        "filename" is the name of the file.
+        Obligatory argument "filename" gives the file name.
+        Optional argument "formatting" can be LONG_TEXT, SHORT_TEXT, or
+        BINARY (see "TextGrid.format()"). Default is LONG_TEXT.
         '''
-        with open(filename, 'w') as f:
-            f.write(str(self))
+        global BINARY, SHORT_TEXT, LONG_TEXT
+        if formatting == BINARY:
+            with open(filename, 'wb') as outfile:
+                outfile.write(self.format(self, formatting))
+        else:
+            with open(filename, 'w') as outfile:
+                outfile.write(self.format(self, formatting))
 
 # A simple test if run as script
 if __name__ == '__main__':
