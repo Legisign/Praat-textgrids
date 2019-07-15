@@ -4,19 +4,20 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-07-11  1.2.0   Read binary textgrids.
+  2019-07-15  1.3.0   Simplify text-file parsers and get rid of the optional
+                      binary= parameter for TextGrid.parse() and
+                      TextGrid.read().
 
 '''
 
 import codecs
-import re
-import struct
+import io
 from collections import OrderedDict, namedtuple
 from .transcript import *
 
 # Global constant
 
-version = '1.2.0'
+version = '1.3.0'
 
 class ParseError(Exception):
     def __str__(self):
@@ -156,144 +157,108 @@ class TextGrid(OrderedDict):
                 tier_count += 1
         return '\n'.join([line.replace('\t', '    ') for line in buff])
 
-    def parse(self, data, binary=False):
+    def parse(self, data):
         '''Parse textgrid data.
 
-        Obligatory argument "data" is either str or bytes. Optional argument
-        "binary" is required when parsing binary data.
+        Obligatory argument "data" is bytes.
         '''
-        if binary:
-            self._parse_binary(data)
+        if not isinstance(data, bytes):
+            raise TypeError
+        binary = b'ooBinaryFile\x08TextGrid'
+        text = ['File type = "ooTextFile"', 'Object class = "TextGrid"', '']
+        # Check and then discard binary header
+        if data[:len(binary)] == binary:
+            buff = io.BytesIO(data[len(binary):])
+            self._parse_binary(buff)
         else:
-            filetype, objclass, separ = data[:3]
-            if filetype != 'File type = "ooTextFile"' or \
-               objclass != 'Object class = "TextGrid"' or \
-               separ != '':
-               raise ParseError
-            if re.match('^-?\d+.?\d*$', data[3]):
-                self._parse_short(data[3:])
+            coding = 'utf-8'
+            # Note and then discard BOM
+            if data[:2] == b'\xfe\xff':
+                coding = 'utf-16-be'
+                data = data[2:]
+            # Now convert to a text buffer
+            buff = [s.strip() for s in data.decode(coding).split('\n')]
+            # Check and then discard header
+            if buff[:len(text)] != text:
+                raise TypeError
+            buff = buff[len(text):]
+            # If the next line starts with a number, this is a short textgrid
+            if buff[0][0] in '-0123456789':
+                self._parse_short(buff)
             else:
-                self._parse_long(data[3:])
+                self._parse_long(buff)
 
     def _parse_long(self, data):
         '''Parse LONG textgrid files. Not meant to be used directly.'''
-
-        def keyval(s):
-            '''Handy key–value type conversions.'''
-            kv = re.compile('^\s*(.+)\s+=\s+(.+)$')
-            k, v = kv.match(s).groups()
-            if v.startswith('"'):
-                v = v.strip('"')
-            else:
-                v = float(v)
-            return k, v
-
-        self.xmin, self.xmax = [float(line.split()[-1]) for line in data[:2]]
-        if '<exists>' not in data[2]:
+        grok = lambda s: s.split(' = ')[1]
+        self.xmin, self.xmax = [float(grok(s)) for s in data[:2]]
+        if data[2] != 'tiers? <exists>':
             return
-        new_tier = re.compile(r'^item \[\d+\]:$')
-        new_interval = re.compile(r'^intervals \[\d+\]:$')
-        new_point = re.compile(r'^points \[\d+\]:$')
-        new_value = re.compile(r'(name|xmin|xmax|xpos|text) = "?.*"?$')
-        tier = []
-        for lineno, line in enumerate(data[5:], 9):
-            if new_tier.match(line):
-                if tier:
-                    self[name] = tier
-                    name = None
-                    tier = None
-            elif new_interval.match(line) and not tier:
-                tier = Tier()
-            elif new_point.match(line) and not tier:
-                tier = Tier(point_tier=True)
-            elif new_value.match(line):
-                try:
-                    key, val = keyval(line)
-                except ValueError:
-                    raise ParseError(lineno)
-                if key == 'name':
-                    name = val
-                elif key == 'xmin':
-                    if not isinstance(val, float):
-                        raise ParseError(lineno)
-                    x0 = val
-                elif key in ('xmax', 'xpos'):
-                    if not isinstance(val, float):
-                        raise ParseError(lineno)
-                    x1 = val
-                elif key == 'text':
-                    if tier.is_point_tier:
-                        elem = Point(val, x1)
-                    else:
-                        elem = Interval(Transcript(val), x0, x1)
-                    tier.append(elem)
-        if tier:
-            self[name] = tier
+        tiers = int(grok(data[3]))
+        p = 6
+        for i in range(tiers):
+            tier_type, tier_name = [grok(s).strip('"') for s in data[p:p + 2]]
+            tier = Tier(point_tier=(tier_type != 'IntervalTier'))
+            tier_xmin, tier_xmax = [float(grok(s)) for s in data[p + 2:p + 4]]
+            tier_len = int(grok(data[p + 4]))
+            p += 6
+            for j in range(tier_len):
+                if tier.is_point_tier:
+                    x1 = float(grok(data[p]))
+                    text = Transcript(grok(data[p + 1]).strip('"'))
+                    tier.append(Point(text, x1))
+                    p += 3
+                else:
+                    x0, x1 = [float(grok(s)) for s in data[p:p + 2]]
+                    text = Transcript(grok(data[p + 2]).strip('"'))
+                    tier.append(Interval(text, x0, x1))
+                    p += 4
+            self[tier_name] = tier
 
     def _parse_short(self, data):
         '''Parse SHORT textgrid files. Not meant to be used directly.'''
-        self.xmin, self.xmax = [float(num) for num in data[:2]]
+        self.xmin, self.xmax = [float(s) for s in data[:2]]
         if data[2] != '<exists>':
             return
-        # tier = []
-        mode = 'type'
-        for lineno, line in enumerate(data[4:], 8):
-            if mode == 'type':
-                tier = Tier(point_tier=(line != '"IntervalTier"'))
-                mode = 'name'
-            elif mode == 'name':
-                name = line.strip('"')
-                mode = 'tmin'
-            elif mode == 'tmin':
-                tmin = float(line)
-                mode = 'tmax'
-            elif mode == 'tmax':
-                tmax = float(line)
-                mode = 'tlen'
-            elif mode == 'tlen':
-                tlen = int(line)
-                mode = 'xmop' if tier.is_point_tier else 'xmin'
-            elif mode == 'xmin':
-                try:
-                    x0 = float(line)
-                except ValueError:
-                    raise ParseError(lineno)
-                mode = 'xmop'
-            elif mode == 'xmop':
-                try:
-                    x1 = float(line)
-                except ValueError:
-                    raise ParseError(lineno)
-                mode = 'text'
-            elif mode == 'text':
-                if tier.is_point_tier:
-                    tier.append(Point(line.strip('"'), x1))
+        tiers = int(data[3])
+        p = 4
+        for i in range(tiers):
+            tier_type, tier_name = [s.strip('"') for s in data[p:p + 2]]
+            print('{} "{}"'.format(tier_type, tier_name))
+            tier = Tier(point_tier=(tier_type == 'PointTier'))
+            p += 4
+            elems = int(data[p])
+            p += 1
+            for j in range(elems):
+                if is_point_tier:
+                    x1, text = data[p:p + 2]
+                    x1 = float(x1)
+                    text = Transcript(text.strip('"'))
+                    tier.append(Point(text, x1))
+                    p += 2
                 else:
-                    tier.append(Interval(line.strip('"') , x0, x1))
-                if len(tier) == tlen:
-                    self[name] = tier
-                    name = None
-                    tier = None
-                    mode = 'type'
-                else:
-                    mode = 'xmin'
+                    x0, x1, text = data[p:p + 3]
+                    x0 = float(x0)
+                    x1 = float(x1)
+                    text = Transcript(text.strip('"'))
+                    tier.append(Interval(text, x0, x1))
+                    p += 3
+            self[tier_name] = tier
 
-    def _parse_binary(self, infile):
+    def _parse_binary(self, data):
         '''Parse BINARY textgrid files. Not meant to be used directly.'''
-        signature = b'ooBinaryFile\x08TextGrid'
+        import struct
+
         sBool, sByte, sShort, sInt, sDouble = [struct.calcsize(c) for c in '?Bhid']
 
-        if infile.read(len(signature)) != signature:
-            raise ParseError
-
-        self.xmin, self.xmax = struct.unpack('>2d', infile.read(2 * sDouble))
-        if not struct.unpack('?', infile.read(sBool))[0]:
+        self.xmin, self.xmax = struct.unpack('>2d', data.read(2 * sDouble))
+        if not struct.unpack('?', data.read(sBool))[0]:
             return
 
-        tiers = struct.unpack('>i', infile.read(sInt))[0]
+        tiers = struct.unpack('>i', data.read(sInt))[0]
         for i in range(tiers):
-            size = struct.unpack('B', infile.read(sByte))[0]
-            desc = infile.read(size)
+            size = struct.unpack('B', data.read(sByte))[0]
+            desc = data.read(size)
             if desc == b'PointTier':
                 point_tier = True
             elif desc == b'IntervalTier':
@@ -301,48 +266,39 @@ class TextGrid(OrderedDict):
             else:
                 raise ParseError
             tier = Tier(point_tier=point_tier)
-            size = struct.unpack('>h', infile.read(sShort))[0]
-            tier_name = infile.read(size).decode()
+            size = struct.unpack('>h', data.read(sShort))[0]
+            tier_name = data.read(size).decode()
             # Discard tier xmin, xmax as redundant
-            infile.read(2 * sDouble)
-            elems = struct.unpack('>i', infile.read(sInt))[0]
+            data.read(2 * sDouble)
+            elems = struct.unpack('>i', data.read(sInt))[0]
             for j in range(elems):
                 if point_tier:
-                    xpos = struct.unpack('>d', infile.read(sDouble))[0]
+                    xpos = struct.unpack('>d', data.read(sDouble))[0]
                 else:
-                    xmin, xmax = struct.unpack('>2d', infile.read(2 * sDouble))
-                size = struct.unpack('>h', infile.read(sShort))[0]
+                    xmin, xmax = struct.unpack('>2d', data.read(2 * sDouble))
+                size = struct.unpack('>h', data.read(sShort))[0]
                 # Apparently size -1 is an index that UTF-16 follows
                 if size == -1:
-                    size = struct.unpack('>h', infile.read(sShort))[0] * 2
+                    size = struct.unpack('>h', data.read(sShort))[0] * 2
                     coding = 'utf-16-be'
                 else:
                     coding = 'ascii'
-                text = Transcript(infile.read(size).decode(coding))
+                text = Transcript(data.read(size).decode(coding))
                 if point_tier:
                     tier.append(Point(text, xpos))
                 else:
                     tier.append(Interval(text, xmin, xmax))
             self[tier_name] = tier
 
-    def read(self, filename, binary=False):
+    def read(self, filename):
         '''Read given file as a TextGrid.
 
         "filename" is the name of the file.
         '''
         self.filename = filename
-        if binary:
-            with open(self.filename, 'rb') as infile:
-                self.parse(infile, binary=True)
-        else:
-            # Praat uses UTF-16 or UTF-8 with no apparent pattern
-            try:
-                with codecs.open(self.filename, 'r', 'UTF-16') as infile:
-                    buff = [line.strip() for line in infile]
-            except UnicodeError:
-                with open(self.filename, 'r') as infile:
-                    buff = [line.strip() for line in infile]
-            self.parse(buff)
+        with open(self.filename, 'rb') as infile:
+            data = infile.read()
+        self.parse(data)
 
     def tier_from_csv(self, tier_name, filename):
         '''Import CSV file to an interval or point tier.
