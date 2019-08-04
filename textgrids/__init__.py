@@ -4,10 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-07-15  1.3.0   Simplified text-file parsers and got rid of the optional
-                      binary= parameter for TextGrid.parse() and
-                      TextGrid.read(). Also new TextGrid.format() and the
-                      ability to write files in any of the formats.
+  2019-08-02  1.3.1   Bug fix.
 
 '''
 
@@ -20,7 +17,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.3.0'
+version = '1.3.1'
 
 class ParseError(Exception):
     def __str__(self):
@@ -414,14 +411,14 @@ class TextGrid(OrderedDict):
         with open(filename, 'w') as csvfile:
             csvfile.write('\n'.join(self[tier_name].csv()))
 
-    def write(self, filename, formatting=LONG_TEXT):
+    def write(self, filename, formatting=TEXT_LONG):
         '''Write the text grid into a Praat TextGrid file.
 
         Obligatory argument "filename" gives the file name.
-        Optional argument "formatting" can be LONG_TEXT, SHORT_TEXT, or
-        BINARY (see "TextGrid.format()"). Default is LONG_TEXT.
+        Optional argument "formatting" can be TEXT_LONG, TEXT_SHORT, or
+        BINARY (see "TextGrid.format()"). Default is TEXT_LONG.
         '''
-        global BINARY, SHORT_TEXT, LONG_TEXT
+        global BINARY, TEXT_SHORT, TEXT_LONG
         if formatting == BINARY:
             with open(filename, 'wb') as outfile:
                 outfile.write(self.format(self, formatting))

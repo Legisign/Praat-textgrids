@@ -23,7 +23,7 @@ The module also exports the following variables:
 
 ## Version
 
-This file documents `praat-textgrids` version 1.2.0.
+This file documents `praat-textgrids` version 1.3.x.
 
 ## Copyright
 
@@ -75,9 +75,9 @@ All the methods of `dict`s plus:
 * `tier_from_csv()` -- read a textgrid tier from a CSV file
 * `tier_to_csv()` -- write a textgrid tier into a CSV file
 
-`parse()` takes an obligatory string argument (Praat-format textgrid data) and an optional argument `binary=BOOLEAN`. If passed binary data, the argument has to be given.
+`parse()` takes an obligatory string argument (Praat-format textgrid data).
 
-`read()` and `write()` each take an obligatory filename argument. `read()` can take an optional argument `binary=BOOLEAN`. Opening a binary file the argument has to be given.
+`read()` and `write()` each take an obligatory filename argument.
 
 `tier_from_csv()` and `tier_to_csv()` both take two obligatory arguments, the tier name and the filename, in that order.
 
@@ -179,7 +179,5 @@ With optional `retain_diacritics=True` argument the transcoding does not remove 
             print('"{}";{}'.format(label, syll.dur))
 
 ## Plans for the future
-
-* `TextGrid.read()` and `TextGrid.parse()` should analyze the file or data and automatically select either text or binary handling as needed. (After all, when parsing text files, short or long format **is** automatically recognized.)
 
 * `TextGrid.__str()__` will continue to produce long text format in the future too, but `TextGrid.write()` should be able to produce any of the three formats.

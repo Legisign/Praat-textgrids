@@ -3,13 +3,15 @@
   templates.py
 
   2019-07-15    Done.
+  2019-08-02    Bug fix. Always TEXT_{LONG|SHORT}, never
+                {LONG|SHORT}_TEXT.
 
 '''
 
 # Symbolic names for the formats
 
-LONG_TEXT = 0
-SHORT_TEXT = 1
+TEXT_LONG = 0
+TEXT_SHORT = 1
 BINARY = 2
 
 # Formatting templates

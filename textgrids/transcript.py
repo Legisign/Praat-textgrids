@@ -4,6 +4,7 @@
   transcription conversions.
 
   2019-07-11    Separated from textgrids module.
+  2019-08-04    Corrected "unrounded open back" symbol.
 
 '''
 
@@ -31,7 +32,7 @@ symbols = {r'\i-': '\u0268',        # unrounded close central
            r'\ae': 'æ',             # unrounded nearly open back
            r'\at': '\u0250',        # unrounded open central
            r'\Oe': '\u0276',        # rounded open front
-           r'\as': '\u03b1',        # unrounded open back
+           r'\as': '\u0251',        # unrounded open back
            r'\ab': '\u0252'}        # rounded open back
 
 # Vowels in either notation
