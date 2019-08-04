@@ -5,6 +5,7 @@
   2019-07-15    Done.
   2019-08-02    Bug fix. Always TEXT_{LONG|SHORT}, never
                 {LONG|SHORT}_TEXT.
+  2019-08-04    Bug fix (line breaks, indentation in templates).
 
 '''
 
@@ -33,7 +34,8 @@ Object class = "TextGrid"
 <exists>
 {}'''
 
-long_tier = '''    item [{}]:
+long_tier = '''
+    item [{}]:
         class = "{}"
         name = "{}"
         xmin = {}
@@ -46,17 +48,19 @@ short_tier = '''"{}"
 {}
 {}'''
 
-long_point = '''        points [{}]:
-            xpos = {}
-            text = "{}"'''
+long_point = '''
+            points [{}]:
+                xpos = {}
+                text = "{}"'''
 
 short_point = '''{}
 "{}"'''
 
-long_interval = '''        intervals [{}]:
-            xmin = {}
-            xmax = {}
-            text = "{}"'''
+long_interval = '''
+            intervals [{}]:
+                xmin = {}
+                xmax = {}
+                text = "{}"'''
 
 short_interval = '''{}
 {}

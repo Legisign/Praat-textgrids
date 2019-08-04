@@ -11,9 +11,3 @@
                       ‘inline_diacritics’ and ‘index_diacritics’.
   2019-07-11  1.1.1   Separated Transcript in a submodule.
   2019-07-14  1.2.0   Read binary textgrids.
-  2019-07-15  1.3.0   Simplified text-file parsers and got rid of the optional
-                      binary= parameter for TextGrid.parse() and
-                      TextGrid.read(). Also new TextGrid.format() and the
-                      ability to write files in any of the formats.
-  2019-08-02  1.3.1   Major bug fix (couldn’t actually load files at all!).
-  2019-08-04  1.3.2   Minor bug fix (corrected an IPA symbol).

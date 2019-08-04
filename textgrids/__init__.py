@@ -4,7 +4,16 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-08-02  1.3.1   Bug fix.
+  2019-07-15  1.3.0.dev1    Simplified text-file parsers and got rid
+                            of the optional binary= parameter for
+                            TextGrid.parse() and TextGrid.read(). Also
+                            new TextGrid.format() and the ability to
+                            write files in any of the formats.
+  2019-08-02  1.3.0.dev2    Major bug fix (couldn’t actually load files
+                            at all!).
+  2019-08-04  1.3.0.dev3    Minor bug fix (corrected an IPA symbol).
+  2019-08-04  1.3.0.dev4    Major bug fix in (long) parser. Next: short
+                            parser!
 
 '''
 
@@ -17,7 +26,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.3.1'
+version = '1.3.0.dev4'
 
 class ParseError(Exception):
     def __str__(self):
@@ -55,6 +64,14 @@ class Interval(object):
     def dur(self):
         '''Return duration of the Interval.'''
         return self.xmax - self.xmin
+
+    def endswithvowel(self):
+        '''Boolean: does the label end with a vowel?
+
+        Discards diacritics before testing.'''
+        global vowels
+        text = self.text.transcode(retain_diacritics=False)
+        return any([text.endswith(vow) for vow in vowels])
 
     @property
     def mid(self):
@@ -122,11 +139,11 @@ class Tier(list):
 class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
-    def __init__(self, filename=None, binary=False):
+    def __init__(self, filename=None):
         super().__init__({})
         self.filename = filename
         if self.filename:
-            self.read(self.filename, binary)
+            self.read(self.filename)
 
     def __repr__(self):
         '''Return Praat (long) text format representation'''
@@ -140,11 +157,11 @@ class TextGrid(OrderedDict):
         '''
         global BINARY, TEXT_LONG, TEXT_SHORT
         if formatting == TEXT_LONG:
-            return(_format_long(self))
+            return(self._format_long())
         elif formatting == TEXT_SHORT:
-            return(_format_short(self))
+            return(self._format_short())
         elif formatting == BINARY:
-            return(_format_binary(self))
+            return(self._format_binary())
         else:
             raise ValueError
 
@@ -189,7 +206,7 @@ class TextGrid(OrderedDict):
         global long_header, long_tier, long_point, long_interval
         out = long_header.format(self.xmin, self.xmax, len(self))
         tier_count = 1
-        for tier, elems in self.items():
+        for name, tier in self.items():
             if tier.is_point_tier:
                 tier_type = 'PointTier'
                 elem_type = 'points'
@@ -198,12 +215,12 @@ class TextGrid(OrderedDict):
                 elem_type = 'intervals'
             out += long_tier.format(tier_count,
                                     tier_type,
-                                    tier,
+                                    name,
                                     self.xmin,
                                     self.xmax,
                                     elem_type,
-                                    len(elems))
-            for elem_count, elem in enumerate(elems, 1):
+                                    len(tier))
+            for elem_count, elem in enumerate(tier, 1):
                 if tier.is_point_tier:
                     out += long_point.format(elem_count,
                                              elem.xpos,
@@ -276,8 +293,8 @@ class TextGrid(OrderedDict):
             tier = Tier(point_tier=(tier_type != 'IntervalTier'))
             p += 2
             tier_xmin, tier_xmax = [float(grab(s)) for s in data[p:p + 2]]
-            tier_len = int(grab(data[p + 4]))
-            p += 6
+            tier_len = int(grab(data[p + 2]))
+            p += 4
             for j in range(tier_len):
                 if tier.is_point_tier:
                     x1 = float(grab(data[p]))
@@ -425,35 +442,3 @@ class TextGrid(OrderedDict):
         else:
             with open(filename, 'w') as outfile:
                 outfile.write(self.format(self, formatting))
-
-# A simple test if run as script
-if __name__ == '__main__':
-    import sys
-    import os.path
-
-    # Error messages
-    E_IOERR = 'I/O error accessing: "{}"'
-    E_NOTFOUND = 'File not found: "{}"'
-    E_PARSE = 'Parse error: file "{}", line {}'
-    E_PERMS = 'No permission to read: "{}"'
-
-    if len(sys.argv) == 1:
-        print('Usage: {} FILE...'.format(sys.argv[0]))
-        sys.exit(0)
-
-    for arg in sys.argv[1:]:
-        try:
-            textgrid = TextGrid(arg)
-        except FileNotFoundError:
-            print(E_NOTFOUND.format(arg), file=sys.stderr)
-            continue
-        except PermissionError:
-            print(E_PERMS.format(arg), file=sys.stderr)
-        except IOError:
-            print(E_IOERR.format(arg), file=sys.stderr)
-            continue
-        except ParseError as exc:
-            print(E_PARSE.format(arg, exc.args[0]), file=sys.stderr)
-            continue
-        # Print in long format
-        print(textgrid)
