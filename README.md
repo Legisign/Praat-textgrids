@@ -22,9 +22,9 @@ The module also exports the following variables:
 
 And the following constants (although they CAN be changed due to Python they SHOULDN’T be changed):
 
-* `BINARY` -- symbolic name for the binary file format (value: 2)
-* `TEXT_LONG` -- symbolic name for the long text file format (value: 0)
-* `TEXT_SHORT` -- symbolic name for the short text file format (value: 1)
+* `BINARY` -- symbolic name for the binary file format
+* `TEXT_LONG` -- symbolic name for the long text file format
+* `TEXT_SHORT` -- symbolic name for the short text file format
 * `version` -- module version as string
 
 ## Version
@@ -61,6 +61,10 @@ Besides `textgrids.version`, which contains the module version number as string,
 
 `inline_diacritics` and `index_diacritics` are subsets of `diacritics`. The former are semantically diacritics but appear as inline symbols, the latter are the “true” diacritics (i.e., under- or overstrikes) that need special handling when transcoding.
 
+### 0.4. TEXT_LONG, TEXT_SHORT, BINARY
+
+Symbolic constants specifying different file formats in `TextGrid.format()` and `TextGrid.write()` methods. Internally they are just small integers (0, 1, and 2, respectively). The default format is `TEXT_LONG`.
+
 ### 1. TextGrid
 
 `TextGrid` is an `collections.OrderedDict` whose keys are tier names (strings) and values are `Tier` objects. The constructor takes an optional filename argument for easy loading and parsing textgrid files.
@@ -75,15 +79,17 @@ All the properties of `dict` plus:
 
 All the methods of `dict` plus:
 
-* `parse()` -- parse string `data` into a TextGrid
-* `read()` -- read a TextGrid file `name`
+* `parse()` -- parse string into a TextGrid
+* `read()` -- read (and parse) a TextGrid file
 * `tier_from_csv()` -- read a textgrid tier from a CSV file
 * `tier_to_csv()` -- write a textgrid tier into a CSV file
 * `write()` -- write a TextGrid file
 
-`parse()` takes an obligatory string argument (Praat-format textgrid data).
+`parse()` takes an obligatory string (or `bytes`) argument which contains textgrid data in any of Praat’s three formats (long text, short text, or binary).
 
-`read()` and `write()` each take an obligatory filename argument. `write()` can take an optional argument specifying the file format; this can be one of `BINARY` (= `int` 2), `TEXT_LONG` (= `int` 0, the default), or `TEXT_SHORT` (= `int` 1).
+`read()` and `write()` both take an obligatory filename argument.
+
+`write()` can take an optional argument specifying the file format; this can be one of `BINARY` (= `int` 2), `TEXT_LONG` (= `int` 0, the default), or `TEXT_SHORT` (= `int` 1).
 
 `tier_from_csv()` and `tier_to_csv()` both take two obligatory arguments, the tier name and the filename, in that order.
 
@@ -115,7 +121,7 @@ All the methods of `list` plus:
 
 ### 3. Interval
 
-`Interval` is an `object` class.
+`Interval` is an `object` class representing one Interval on an IntervalTier.
 
 #### 3.1. Properties
 
@@ -127,18 +133,18 @@ All the methods of `list` plus:
 
 #### 3.3. Methods
 
-* `containsvowel()` -- `bool`: does the interval contain a vowel?
-* `endswithvowel()` -- `bool`: does the interval end with a vowel?
-* `startswithvowel()` -- `bool`: does the interval start with a vowel?
-* `timegrid()` -- create a grid of even time slices
+* `containsvowel()` -- does the interval contain a vowel?
+* `endswithvowel()` -- does the interval end with a vowel?
+* `startswithvowel()` -- does the interval start with a vowel?
+* `timegrid()` -- create a time grid
 
-`containsvowel()`, `endswithvowel()`, and `startswithvowel()` check for possible vowels in both Praat notation and Unicode but can of course make an error if symbols are used in an unexpected way. They don’t take arguments. (Internally, `endswithvowel()` first transcodes the text to IPA removing all diacritics to simplify the test.)
+`containsvowel()`, `endswithvowel()`, and `startswithvowel()` are `bool` functions. They check for possible vowels in the `text` property in both Praat notation and Unicode, but can of course make an error if symbols are used in an unexpected way. They don’t take arguments. (Internally, `endswithvowel()` first transcodes the text to IPA removing all diacritics to simplify the test.)
 
 `timegrid()` returns a list of timepoints (in `float`) evenly distributed from `xmin` to `xmax`. It takes an optional integer argument specifying the number of timepoints desired; the default is 3. It raises a `ValueError` if the argument is not an integer or is less than 1.
 
 ### 4. Point
 
-`Point` is a `namedtuple` with two properties: `text` and `xpos`.
+`Point` is a `namedtuple` representing one Point on a PointTier.
 
 #### 4.1. Properties
 
