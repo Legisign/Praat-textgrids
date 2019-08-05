@@ -29,10 +29,11 @@ item []:'''
 short_header = '''File type = "ooTextFile"
 Object class = "TextGrid"
 
-{}
-{}
+{xmin}
+{xmax}
 <exists>
-{}'''
+{length}
+'''
 
 long_tier = '''
     item [{}]:
@@ -42,19 +43,21 @@ long_tier = '''
         xmax = {}
         {}: size = {}'''
 
-short_tier = '''"{}"
-"{}"
-{}
-{}
-{}'''
+short_tier = '''"{tier_type}"
+"{name}"
+{xmin}
+{xmax}
+{length}
+'''
 
 long_point = '''
             points [{}]:
                 xpos = {}
                 text = "{}"'''
 
-short_point = '''{}
-"{}"'''
+short_point = '''{xpos}
+"{text}"
+'''
 
 long_interval = '''
             intervals [{}]:
@@ -62,6 +65,7 @@ long_interval = '''
                 xmax = {}
                 text = "{}"'''
 
-short_interval = '''{}
-{}
-"{}"'''
+short_interval = '''{xmin}
+{xmax}
+"{text}"
+'''

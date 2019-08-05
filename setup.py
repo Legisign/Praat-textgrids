@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-   2019-08-04 -- Minor bug fix (corrected an IPA symbol).
+  2019-08-05  1.3.0.dev6    Fixed binary writing.
 
 '''
 
@@ -29,7 +29,7 @@ with open('README.md', 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.3.2',
+                 version='1.3.0.dev6',
                  description='Manipulation of Praat text-format TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',

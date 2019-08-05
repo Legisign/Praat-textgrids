@@ -1,0 +1,36 @@
+# Header
+b'ooBinaryFile\x08TextGrid'         # where \x08 = len('TextGrid')
+grid_xmin : double
+grid_xmax : double
+exists : bool
+tiers : int
+
+# Per Tier
+str_len : byte
+tier_type : str_len * byte
+str_len : int
+tier_name : str_len * byte
+(tier_xmin : double)                 # discarded
+(tier_xmax : double)                 # discarded
+elements : int
+
+# Per Point
+xpos : double
+str_len : short
+str_len != -1:
+    text : str_len * byte
+else:
+    # discard the -1
+    str_len : short
+    text : str_len * byte
+
+# Per Interval
+xmin : double
+xmax : double
+srt_len : short
+str_len != -1:
+    text : str_len * Byte
+else:
+    # discard the -1
+    str_len short
+    text : str_len * Byte
