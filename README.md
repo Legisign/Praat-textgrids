@@ -165,7 +165,9 @@ Optional `to_unicode=False` argument inverts the direction of the transcoding fr
 
 With optional `retain_diacritics=True` argument the transcoding does not remove over- and understrike diacritics from the result.
 
-## Example code
+## Examples
+
+### Snippet 1: list syllable durations
 
     import sys
     import textgrids
@@ -185,3 +187,20 @@ With optional `retain_diacritics=True` argument the transcoding does not remove 
             label = syll.text.transcode()
             # Print label and syllable duration, CSV-like
             print('"{}";{}'.format(label, syll.dur))
+
+### Snippet 2: convert any textgrid to binary format
+
+    import sys
+    import os.path
+    import textgrids
+
+    for arg in sys.argv[1:]:
+        name, ext = os.path.splitext(arg)
+        try:
+            grid = textgrids.TextGrid(arg)
+        except (textgrids.ParseError, textgrids.BinaryError):
+            print('Not a recognized file format!', file=sys.stderr)
+            continue
+
+        # Write a new file
+        grid.write(name + '.bin', fmt=textgrids.BINARY)
