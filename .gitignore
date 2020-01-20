@@ -106,5 +106,8 @@ venv.bak/
 # Backup files
 *~
 
+# Test subdir
+test/
+
 # Praat textgrids
 *.*TextGrid
