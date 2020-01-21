@@ -4,23 +4,10 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
   Published under GNU General Public License version 3 or newer.
 
-  2019-07-15  1.3.0.dev1    Simplified text-file parsers and got rid
-                            of the optional binary= parameter for
-                            TextGrid.parse() and TextGrid.read(). Also
-                            new TextGrid.format() and the ability to
-                            write files in any of the formats.
-  2019-08-02  1.3.0.dev2    Major bug fix (couldn’t actually load files
-                            at all!).
-  2019-08-04  1.3.0.dev3    Minor bug fix (corrected an IPA symbol).
-  2019-08-04  1.3.0.dev4    New method: Interval.endswithvowel(). Major bug
-                            fix in (long) parser. Next: short parser!
-  2019-08-05  1.3.0.dev5    Checked short parser. Further bug fixes in Tier
-                            class.
-  2019-08-05  1.3.0.dev6    Fixed binary writing.
-  2020-01-21  1.3.0.dev7    Added TextTier as a alternative name for
-                            PointTier. AFAIK TextTiers cannot be created in
-                            Praat but they do appear in Praat’s documentation
-                            so I guess we should take care of them?
+  2020-01-21  1.3.0   Added TextTier as a alternative name for PointTier.
+                      AFAIK TextTiers cannot be created in Praat but they do
+                      appear in Praat’s documentation so I guess we should
+                      take care of them?
 
 '''
 
@@ -33,7 +20,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.3.0.dev7'
+version = '1.3.0'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
