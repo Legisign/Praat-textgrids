@@ -33,7 +33,7 @@ This file documents `praat-textgrids` version 1.3.x.
 
 ## Copyright
 
-Copyright © 2019 Legisign.org, Tommi Nieminen <software@legisign.org>
+Copyright © 2019–20 Legisign.org, Tommi Nieminen <software@legisign.org>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

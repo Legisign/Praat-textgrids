@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''textgrids -- Read and handle Praat’s textgrid files
 
-  © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-19
+  © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-20
   Published under GNU General Public License version 3 or newer.
 
   2020-01-21  1.3.0   Added TextTier as a alternative name for PointTier.
