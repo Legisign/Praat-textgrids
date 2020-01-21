@@ -17,6 +17,10 @@
   2019-08-05  1.3.0.dev5    Checked short parser. Further bug fixes in Tier
                             class.
   2019-08-05  1.3.0.dev6    Fixed binary writing.
+  2020-01-21  1.3.0.dev7    Added TextTier as a alternative name for
+                            PointTier. AFAIK TextTiers cannot be created in
+                            Praat but they do appear in Praat’s documentation
+                            so I guess we should take care of them?
 
 '''
 
@@ -29,7 +33,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.3.0.dev6'
+version = '1.3.0.dev7'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -307,7 +311,11 @@ class TextGrid(OrderedDict):
         for i in range(tiers):
             size = struct.unpack('B', data.read(sByte))[0]
             desc = data.read(size)
-            if desc == b'PointTier':
+            # TextTiers don’t appear anywhere in Praat’s UI as far as
+            # I can see but they are mentioned in Praat’s online docs.
+            # TextTier is just a PointTier with a different name
+            # so let’s treat it as one.
+            if desc in (b'PointTier', b'TextTier'):
                 point_tier = True
             elif desc == b'IntervalTier':
                 point_tier = False
