@@ -4,10 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-20
   Published under GNU General Public License version 3 or newer.
 
-  2020-01-21  1.3.0   Added TextTier as a alternative name for PointTier.
-                      AFAIK TextTiers cannot be created in Praat but they do
-                      appear in Praat’s documentation so I guess we should
-                      take care of them?
+  2020-03-23  1.3.1   BUG FIX: Tier.concat() fixed.
 
 '''
 
@@ -20,7 +17,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.3.0'
+version = '1.3.1'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -111,22 +108,26 @@ class Tier(list):
         super().__add__(elem)
 
     def concat(self, first=0, last=-1):
-        '''Concatenate Intervals Tier[first]...Tier[last].
+        '''Return tier with intervals Tier[first]...Tier[last] concatenated.
 
-        first and last follow the usual Python index semantics: starting from
-        0, negative number count from the end.
+        Parameters follow the usual Python index semantics: starting from 0,
+        negative number count from the end. Note that the tier is not changed
+        in place, you have to assign it to a variable.
 
-        The method raises an exception if the Tier is a point tier.
+        The method raises a TypeError if the Tier is a point tier,
+        and ValueError if Tier[first:last] is not a slice.
         '''
         if self.is_point_tier:
             raise TypeError
-        area = self[first:last]
-        if area:
-            xmin = self[first].xmin
-            xmax = self[last].xmax
-            text = ''.join([segm.text for segm in area])
-            new_segm = Interval(text, xmin, xmax)
-            self = self[first:] + new_segm + self[:last]
+        area = self[first:last + 1]
+        if not area:
+            raise ValueError
+        xmin = self[first].xmin
+        xmax = self[last].xmax
+        text = ''.join([segm.text for segm in area])
+        new = Interval(text, xmin, xmax)
+        self = self[:first] + [new] + self[last + 1:]
+        return self
 
     def to_csv(self):
         '''Format tier data as CSV, each row a separate string.'''

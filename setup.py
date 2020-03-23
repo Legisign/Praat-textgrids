@@ -29,8 +29,8 @@ with open('README.md', 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.3.0',
-                 description='Manipulation of Praat text-format TextGrids',
+                 version='1.3.1',
+                 description='Manipulation of Praat TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
                  url='http://github.com/Legisign/Praat-textgrids',
