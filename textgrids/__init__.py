@@ -4,7 +4,8 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-20
   Published under GNU General Public License version 3 or newer.
 
-  2020-03-23  1.3.1   BUG FIX: Tier.concat() fixed.
+  2020-03-27  1.4.0.dev1    New ideas from Maxine Fily: tier + tier should
+                            work as expected, concatenating tiers.
 
 '''
 
@@ -17,7 +18,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.3.1'
+version = '1.4.0.dev1'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -94,21 +95,29 @@ class Interval(object):
 class Tier(list):
     '''Tier is a list of either Interval or Point objects.'''
 
-    def __init__(self, data=None, point_tier=False):
+    def __init__(self, data=None, xmin=0.0, xmax=0.0, point_tier=False):
         self.is_point_tier = point_tier
+        self.xmin = xmin
+        self.xmax = xmax
         if not data:
             data = []
         super().__init__(data)
 
-    def __add__(self, elem):
-        if self.is_point_tier and not isinstance(elem, Point):
+    def __add__(self, tier):
+        '''Concatenate tiers.'''
+        # Only a tier or the empty list can be concatenated with a tier
+        if tier and not isinstance(tier, Tier):
             raise TypeError
-        elif not isinstance(elem, Interval):
+        # Concatenate only tiers of the same type
+        if self.is_point_tier != tier.is_point_tier:
             raise TypeError
-        super().__add__(elem)
+        # Sanity check
+        if self.xmax < tier.xmin:
+            raise ValueError
+        super().__add__(tier)
 
-    def concat(self, first=0, last=-1):
-        '''Return tier with intervals Tier[first]...Tier[last] concatenated.
+    def merge(self, first=0, last=-1):
+        '''Merge intervals Tier[first]...Tier[last].
 
         Parameters follow the usual Python index semantics: starting from 0,
         negative number count from the end. Note that the tier is not changed
@@ -145,7 +154,7 @@ class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
     def __init__(self, filename=None):
-        # super().__init__({})
+        self.xmin = self.xmax = 0.0
         self.filename = filename
         if self.filename:
             self.read(self.filename)
@@ -312,8 +321,8 @@ class TextGrid(OrderedDict):
             tier = Tier(point_tier=point_tier)
             size = struct.unpack('>h', data.read(sShort))[0]
             tier_name = data.read(size).decode()
-            # Discard tier xmin, xmax as redundant
-            data.read(2 * sDouble)
+            xmin = data.read(sDouble)
+            xmax = data.read(sDouble)
             elems = struct.unpack('>i', data.read(sInt))[0]
             for j in range(elems):
                 if point_tier:
@@ -333,6 +342,8 @@ class TextGrid(OrderedDict):
                 else:
                     tier.append(Interval(text, xmin, xmax))
             self[tier_name] = tier
+            self.xmin = xmin
+            self.xmax = xmax
 
     def _parse_long(self, data):
         '''Parse LONG textgrid files. Not intended to be used directly.'''

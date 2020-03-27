@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  2020-01-21  1.3.0    Automatic file type detection.
+  2020-03-27  1.4.0.dev1    Tier + Tier -> Tier, as it should be.
 
 '''
 
@@ -29,7 +29,7 @@ with open('README.md', 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.3.1',
+                 version='1.4.0.dev1',
                  description='Manipulation of Praat TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
