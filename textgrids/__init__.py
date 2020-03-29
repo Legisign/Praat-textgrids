@@ -8,6 +8,9 @@
                             work as expected, concatenating tiers.
   2020-03-29  1.4.0.dev2    Fixed Tier.to_csv() bug, but the changes in dev1
                             still need testing.
+  2020-03-29  1.4.0.dev3    For tier + tier to work, tier.xmin and tier.xmax
+                            should be read after all. Parser changes as well
+                            as fixes for Tier.__add__().
 
 '''
 
@@ -20,7 +23,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev2'
+version = '1.4.0.dev3'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -90,7 +93,7 @@ class Interval(object):
         Interval. xmin and the last Interval.xmax.
         '''
         if num <= 1 or num != int(num):
-            raise ValueError
+            raise ValueError('value not integer or <= 1')
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
 
@@ -99,24 +102,27 @@ class Tier(list):
 
     def __init__(self, data=None, xmin=0.0, xmax=0.0, point_tier=False):
         self.is_point_tier = point_tier
-        self.xmin = xmin
-        self.xmax = xmax
         if not data:
+            self.xmin = xmin
+            self.xmax = xmax
             data = []
+        else:
+            self.xmin = data[0].xmin
+            self.xmax = data[-1].xmax
         super().__init__(data)
 
     def __add__(self, tier):
         '''Concatenate tiers.'''
         # Only a tier or the empty list can be concatenated with a tier
         if tier and not isinstance(tier, Tier):
-            raise TypeError
+            raise TypeError('incompatible types')
         # Concatenate only tiers of the same type
         if self.is_point_tier != tier.is_point_tier:
-            raise TypeError
+            raise TypeError('tier types differ')
         # Sanity check
-        if self.xmax < tier.xmin:
-            raise ValueError
-        super().__add__(tier)
+        if self.xmax > tier.xmin:
+            raise ValueError('time values do not match')
+        return Tier(super().__add__(tier))
 
     def merge(self, first=0, last=-1):
         '''Merge intervals Tier[first]...Tier[last].
@@ -361,7 +367,7 @@ class TextGrid(OrderedDict):
             tier_type, tier_name = [grab(s).strip('"') for s in data[p:p + 2]]
             tier = Tier(point_tier=(tier_type != 'IntervalTier'))
             p += 2
-            tier_xmin, tier_xmax = [float(grab(s)) for s in data[p:p + 2]]
+            tier.xmin, tier.xmax = [float(grab(s)) for s in data[p:p + 2]]
             tier_len = int(grab(data[p + 2]))
             p += 4
             for j in range(tier_len):
@@ -387,9 +393,9 @@ class TextGrid(OrderedDict):
         for i in range(tiers):
             tier_type, tier_name = [s.strip('"') for s in data[p:p + 2]]
             tier = Tier(point_tier=(tier_type == 'PointTier'))
-            p += 4
-            elems = int(data[p])
-            p += 1
+            tier.xmin, tier.xmax = [float(x) for x in data[p + 2:p + 4]]
+            elems = int(data[p + 4])
+            p += 5
             for j in range(elems):
                 if tier.is_point_tier:
                     x1, text = data[p:p + 2]

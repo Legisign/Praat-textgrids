@@ -22,6 +22,9 @@
   2020-03-27  1.4.0.dev1    Tier + Tier -> Tier, as it should be.
   2020-03-29  1.4.0.dev2    Tier.to_csv() fix, changes in dev1 still need
                             testing.
+  2020-03-29  1.4.0.dev3    For tier + tier to work, tier.xmin and tier.xmax
+                            should be read after all. Parser changes as well
+                            as fixes for Tier.__add__().
 
 '''
 
@@ -31,7 +34,7 @@ with open('README.md', 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.4.0.dev2',
+                 version='1.4.0.dev3',
                  description='Manipulation of Praat TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
