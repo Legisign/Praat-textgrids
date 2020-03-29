@@ -6,6 +6,8 @@
 
   2020-03-27  1.4.0.dev1    New ideas from Maxine Fily: tier + tier should
                             work as expected, concatenating tiers.
+  2020-03-29  1.4.0.dev2    Fixed Tier.to_csv() bug, but the changes in dev1
+                            still need testing.
 
 '''
 
@@ -18,7 +20,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev1'
+version = '1.4.0.dev2'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -141,9 +143,11 @@ class Tier(list):
     def to_csv(self):
         '''Format tier data as CSV, each row a separate string.'''
         if self.is_point_tier:
-            return ['"{}";{}'.format(t, xp) for t, xp in self]
+            return ['"{}";{}'.format(p.text, p.xpos) for p in self]
         else:
-            return ['"{}";{};{}'.format(t, xb, xe) for t, xb, xe in self]
+            return ['"{}";{};{}'.format(i.text.transcode(),
+                                        i.xmin,
+                                        i.xmax) for i in self]
 
     @property
     def tier_type(self):
