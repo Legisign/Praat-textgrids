@@ -4,7 +4,7 @@
    praat-textgrids
 
    Python module for manipulating Praat text-format TextGrid files.
-   Copyright © 2019 Legisign.org, Tommi Nieminen <software@legisign.org>
+   Copyright © 2019–2020 Legisign.org, Tommi Nieminen <software@legisign.org>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
