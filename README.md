@@ -29,7 +29,7 @@ And the following constants (although they CAN be changed due to Python they SHO
 
 ## Version
 
-This file documents `praat-textgrids` version 1.3.1.
+This file documents `praat-textgrids` version 1.4.0.
 
 ## Copyright
 
@@ -112,10 +112,10 @@ All the properties of `list` plus:
 
 All the methods of `list` plus:
 
-* `concat()` -- concatenate intervals
+* `merge()` -- merge intervals **NOTE** renamed from 1.3!
 * `to_csv()` -- convert tier data into a CSV-like list
 
-`concat()` concatenates given intervals into one. It takes two arguments, `first=` and `last=`, both of which are integer indexes with the usual Python semantics: 0 stands for the first element, -1 for the last element, these being also the defaults. The function raises a `TypeError` if used with a point tier, and `ValueError` if the parameters do not specify a valid slice. **Note** that this is a function and returns the result instead of modifying the Tier in place.
+`merge()` merges given intervals into one. It takes two arguments, `first=` and `last=`, both of which are integer indexes with the usual Python semantics: 0 stands for the first element, -1 for the last element, these being also the defaults. The function raises a `TypeError` if used with a point tier, and `ValueError` if the parameters do not specify a valid slice. **Note** This is a function and returns the result instead of modifying the Tier in place.
 
 `to_csv()` returns a CSV-like list. It’s mainly intended to be used from the `TextGrid` level method `tier_to_csv()` but can be called directly if writing to a file is not desired.
 
