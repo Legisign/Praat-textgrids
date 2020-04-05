@@ -11,6 +11,10 @@
   2020-03-29  1.4.0.dev3    For tier + tier to work, tier.xmin and tier.xmax
                             should be read after all. Parser changes as well
                             as fixes for Tier.__add__().
+  2020-04-05  1.4.0.dev4    Two fixes: Interval.__init__() should RAISE an
+                            exception, not return one if xmin > xmax. Also,
+                            TextGrid.tier_from_csv() should convert the xpos,
+                            xmin, and xmax values read from the CSV to floats.
 
 '''
 
@@ -23,7 +27,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev3'
+version = '1.4.0.dev4'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -49,7 +53,7 @@ class Interval(object):
         self.xmin = xmin
         self.xmax = xmax
         if self.xmin > self.xmax:
-            return ValueError
+            raise ValueError
 
     def __repr__(self):
         '''Return (semi-)readable representation of self.'''
@@ -432,15 +436,15 @@ class TextGrid(OrderedDict):
         tier = None
         with open(filename, 'r') as csvfile:
             reader = csv.reader(csvfile, delimiter=';')
-            for line in reader:
+            for lineno, line in enumerate(reader):
                 if len(line) == 2:
                     text, xpos = line
-                    elem = Point(text, xpos)
+                    elem = Point(text, float(xpos))
                 elif len(line) == 3:
                     text, xmin, xmax = line
-                    elem = Interval(text, xmin, xmax)
+                    elem = Interval(text, float(xmin), float(xmax))
                 else:
-                    raise ValueError
+                    raise ValueError('incorrect number of values: file "{}", line {}'.format(csvfile, lineno))
                 if not tier:
                     if isinstance(elem, Point):
                         tier = Tier(point_tier=True)
