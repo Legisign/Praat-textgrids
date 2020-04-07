@@ -15,6 +15,11 @@
                             exception, not return one if xmin > xmax. Also,
                             TextGrid.tier_from_csv() should convert the xpos,
                             xmin, and xmax values read from the CSV to floats.
+  2020-04-06  1.4.0.dev5    Trying to set Tier.xmin and Tier.xmax correctly.
+  2020-04-06  1.4.0.dev6    Forced conversion of xmin, xmax to floats in
+                            Interval.__init__() too. (No doubt the proper way
+                            would be to define getter and setter methods but
+                            that seems like an overkill.)
 
 '''
 
@@ -27,7 +32,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev4'
+version = '1.4.0.dev6'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -50,10 +55,10 @@ class Interval(object):
 
     def __init__(self, text=None, xmin=0.0, xmax=0.0):
         self.text = Transcript(text)
-        self.xmin = xmin
-        self.xmax = xmax
+        self.xmin = float(xmin)
+        self.xmax = float(xmax)
         if self.xmin > self.xmax:
-            raise ValueError
+            raise ValueError('xmin > xmax')
 
     def __repr__(self):
         '''Return (semi-)readable representation of self.'''
@@ -97,7 +102,7 @@ class Interval(object):
         Interval. xmin and the last Interval.xmax.
         '''
         if num <= 1 or num != int(num):
-            raise ValueError('value not integer or <= 1')
+            raise ValueError('value not integer or is <= 1')
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
 
@@ -105,14 +110,17 @@ class Tier(list):
     '''Tier is a list of either Interval or Point objects.'''
 
     def __init__(self, data=None, xmin=0.0, xmax=0.0, point_tier=False):
-        self.is_point_tier = point_tier
         if not data:
-            self.xmin = xmin
-            self.xmax = xmax
             data = []
-        else:
-            self.xmin = data[0].xmin
-            self.xmax = data[-1].xmax
+        # Use data for xmin and xmax unless they are explicitly given
+        if data and xmin == 0.0 and xmax == 0.0:
+            xmin = data[0].xmin
+            xmax = data[-1].xmax
+        self.xmin = float(xmin)
+        self.xmax = float(xmax)
+        if self.xmin < 0 or self.xmax < 0:
+            raise ValueError('value not float or is < 0.0')
+        self.is_point_tier = point_tier
         super().__init__(data)
 
     def __add__(self, tier):
