@@ -59,7 +59,7 @@ Besides `textgrids.version`, which contains the module version number as string,
 
 `diacritics` is a `dict` of all diacritics in Praat notation (as keys) and their Unicode counterparts (as values).
 
-`inline_diacritics` and `index_diacritics` are subsets of `diacritics`. The former are semantically diacritics but appear as inline symbols, the latter are the “true” diacritics (i.e., under- or overstrikes) that need special handling when transcoding.
+`inline_diacritics` and `index_diacritics` are subsets of `diacritics`. The former are semantically diacritics but appear as inline symbols, the latter are the "true" diacritics (i.e., under- or overstrikes) that need special handling when transcoding.
 
 ### 0.4. TEXT_LONG, TEXT_SHORT, BINARY
 
