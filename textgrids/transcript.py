@@ -5,6 +5,7 @@
 
   2019-07-11    Separated from textgrids module.
   2019-08-04    Corrected "unrounded open back" symbol.
+  2020-10-20    Removed debugging print() calls.
 
 '''
 
@@ -158,18 +159,15 @@ class Transcript(str):
         # index diacritics, swap them to follow their symbols,
         # otherwise remove them
         if not to_unicode:
-            # print('in = "{}"'.format([c for c in out]))
             if retain_diacritics:
                 for uni in index_diacritics.values():
                     p = out.find(uni)
                     while p >= 0:
                         out = out[:p] + out[p + 1] + out[p] + out[p + 2:]
                         p = out.find(uni, p + 2)
-                        # print('mid = "{}'.format([c for c in out]))
             else:
                 for uni in index_diacritics.values():
                     out = out.replace(uni, '')
-            # print('out = "{}"'.format([c for c in out]))
 
         # Second stage: change INLINE symbols (diacritics included)
         # (there’s a neater way of combining dicts in Python 3.5+,
