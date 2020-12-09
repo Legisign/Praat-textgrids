@@ -20,6 +20,8 @@
                             Interval.__init__() too. (No doubt the proper way
                             would be to define getter and setter methods but
                             that seems like an overkill.)
+  2020-12-08  1.5.0.dev1    Added experimental Interval.move() and Tier.move()
+                            as per Pertti Palo’s wishes.
 
 '''
 
@@ -32,7 +34,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev6'
+version = '1.5.0.dev1'
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
@@ -88,6 +90,11 @@ class Interval(object):
     def mid(self):
         '''Return temporal midpoint for the Interval.'''
         return self.xmin + self.dur / 2
+
+    def move(self, offset=0):
+        '''Move Interval for given number of seconds.'''
+        self.xmin += offset
+        self.xmax += offset
 
     def startswithvowel(self):
         '''Boolean: does the label start with a vowel?'''
@@ -157,6 +164,18 @@ class Tier(list):
         new = Interval(text, xmin, xmax)
         self = self[:first] + [new] + self[last + 1:]
         return self
+
+    def move(self, offset=0):
+        '''Move tier for the given number of seconds.'''
+        if self.is_point_tier:
+            new_tier = Tier(point_tier=True)
+            for point in self:
+                new_point = Point(point.text, point.xpos + offset)
+                new_tier.append(new_point)
+            self = new_tier
+        else:
+            for interval in self:
+                interval.move(offset)
 
     def to_csv(self):
         '''Format tier data as CSV, each row a separate string.'''
