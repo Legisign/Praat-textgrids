@@ -143,6 +143,10 @@ class Tier(list):
             raise ValueError('time values do not match')
         return Tier(super().__add__(tier))
 
+    @property
+    def dur(self):
+        return self.xmax - self.xmin
+
     def merge(self, first=0, last=-1):
         '''Merge intervals Tier[first]...Tier[last].
 
@@ -165,8 +169,14 @@ class Tier(list):
         self = self[:first] + [new] + self[last + 1:]
         return self
 
-    def move(self, offset=0):
-        '''Move tier for the given number of seconds.'''
+    def move(self, offset=0.0, start=None, end=None):
+        '''Move tier by offset between start and end times.
+
+        All values are in seconds.'''
+        if start is None:
+            start = self.xmin
+        if end is None:
+            end = self.xmax
         if self.is_point_tier:
             new_tier = Tier(point_tier=True)
             for point in self:
@@ -175,7 +185,16 @@ class Tier(list):
             self = new_tier
         else:
             for interval in self:
-                interval.move(offset)
+                if start >= interval.xmin and end <= interval.xmax:
+                    interval.move(offset)
+
+    def stretch(self, start=None, end=None):
+        '''Stretch tier between new start and end timepoints.'''
+        if start is None:
+            start = self.xmin
+        if end is None:
+            end = self.xmax
+        pass
 
     def to_csv(self):
         '''Format tier data as CSV, each row a separate string.'''
