@@ -4,7 +4,7 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-20
   Published under GNU General Public License version 3 or newer.
 
-  2020-03-27  1.4.0.dev1    New ideas from Maxine Fily: tier + tier should
+  2020-03-27  1.4.0.dev1    New ideas from Maxime Fily: tier + tier should
                             work as expected, concatenating tiers.
   2020-03-29  1.4.0.dev2    Fixed Tier.to_csv() bug, but the changes in dev1
                             still need testing.
