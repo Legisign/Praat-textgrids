@@ -111,3 +111,6 @@ test/
 
 # Praat textgrids
 *.*TextGrid
+
+# OLD files
+OLD_*
