@@ -131,9 +131,10 @@ class Tier(list):
         # Concatenate only tiers of the same type
         if self.is_point_tier != tier.is_point_tier:
             raise TypeError('tier types differ')
-        # Sanity check
+        # Do not add a tier at the end which begins before this one ends.
         if self.xmax > tier.xmin:
-            raise ValueError('time values do not match')
+            raise ValueError('trying to extend a tier with one that begins before this tier ends: {max} > {min}', 
+                self.xmax, tier.xmin)
         return Tier(super().__add__(tier))
 
     def merge(self, first=0, last=-1):
