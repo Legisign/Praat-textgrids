@@ -133,7 +133,7 @@ class Tier(list):
             raise TypeError('tier types differ')
         # Do not add a tier at the end which begins before this one ends.
         if self.xmax > tier.xmin:
-            raise ValueError('trying to extend a tier with one that begins before this tier ends: {max} > {min}', 
+            raise ValueError('Cannot extend a tier with one that begins before this tier ends: {max} > {min}', 
                 self.xmax, tier.xmin)
         return Tier(super().__add__(tier))
 
