@@ -435,6 +435,24 @@ class TextGrid(OrderedDict):
             data = infile.read()
         self.parse(data)
 
+    def interval_tier_from_array(self, tier_name, array):
+        """
+        Create a new interval tier from an array presentation.
+
+        The array should contain dicts with the fields/keys label (string),
+        begin and end (float) for each element. Other keys will be ignored.
+
+        tier_name is the name of the new tier. 
+        array is an array of interval dicts:
+            {'label': label, 'begin': time value, 'end': time_value}
+        """
+        tier = Tier()
+        for i, element in enumerate(array):
+            elem = Interval(element['label'], element['begin'], element['end'])
+            tier.append(elem)
+        self[tier_name] = tier
+
+
     def tier_from_csv(self, tier_name, filename):
         '''Import CSV file to an interval or point tier.
 
