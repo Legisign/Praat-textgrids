@@ -451,6 +451,8 @@ class TextGrid(OrderedDict):
             elem = Interval(element['label'], element['begin'], element['end'])
             tier.append(elem)
         self[tier_name] = tier
+        if tier.xmax > self.xmax:
+            self.xmax = tier.xmax
 
 
     def tier_from_csv(self, tier_name, filename):
