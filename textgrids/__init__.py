@@ -447,9 +447,10 @@ class TextGrid(OrderedDict):
             {'label': label, 'begin': time value, 'end': time_value}
         """
         tier = Tier()
-        for i, element in enumerate(array):
+        for element in array:
             elem = Interval(element['label'], element['begin'], element['end'])
             tier.append(elem)
+            tier.xmax = element['end']
         self[tier_name] = tier
         if tier.xmax > self.xmax:
             self.xmax = tier.xmax
