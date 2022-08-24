@@ -456,6 +456,30 @@ class TextGrid(OrderedDict):
             self.xmax = tier.xmax
 
 
+    def interval_tier_to_array(self, tier_name):
+        """
+        Return the tier with tier_name as an array.
+
+        The array will contain dicts with the fields/keys label (string),
+        begin and end (float) for each interval. The dicts will be in 
+        time order from first to last.
+
+        If no Tier with the given name exists, a KeyError will be 
+        raised.
+        """
+        tier = self[tier_name]
+        table = []
+        for interval in tier:
+            element = {
+                'label': interval.text,
+                'xmin': interval.xmin,
+                'xmax': interval.xmax
+            }
+            table.append(element)
+        
+        return table
+
+
     def tier_from_csv(self, tier_name, filename):
         '''Import CSV file to an interval or point tier.
 
