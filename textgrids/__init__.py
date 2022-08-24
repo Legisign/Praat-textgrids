@@ -106,6 +106,12 @@ class Interval(object):
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
 
+    def move_t0(self, offset):
+        """Move xmin and xmax by offset."""
+        self.xmin += offset
+        self.xmax += offset
+
+
 class Tier(list):
     '''Tier is a list of either Interval or Point objects.'''
 
@@ -168,6 +174,18 @@ class Tier(list):
                                         i.xmin,
                                         i.xmax) for i in self]
 
+    def move_t0(self, offset):
+        """Move all timestamps in this Tier, including xmin and xmax, by offset."""
+        self.xmin += offset
+        self.xmax += offset
+
+        if self.is_point_tier:
+            for point in self:
+                point.xpos += offset
+        else:
+            for interval in self:
+                interval.move_t0(offset)
+
     @property
     def tier_type(self):
         '''Return tier type as string (for convenience).'''
@@ -176,8 +194,8 @@ class Tier(list):
 class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
-    def __init__(self, filename=None):
-        self.xmin = self.xmax = 0.0
+    def __init__(self, filename=None, xmin = 0.0):
+        self.xmin = self.xmax = xmin
         self.filename = filename
         if self.filename:
             self.read(self.filename)
@@ -472,8 +490,8 @@ class TextGrid(OrderedDict):
         for interval in tier:
             element = {
                 'label': interval.text,
-                'xmin': interval.xmin,
-                'xmax': interval.xmax
+                'begin': interval.xmin,
+                'end': interval.xmax
             }
             table.append(element)
         
@@ -527,3 +545,12 @@ class TextGrid(OrderedDict):
         global BINARY, TEXT_SHORT, TEXT_LONG
         with open(filename, 'w' if fmt != BINARY else 'wb') as outfile:
             outfile.write(self.format(fmt))
+
+    def move_t0(self, offset):
+        """Move all boundaries in this TextGrid, including xmin and xmax, by offset."""
+        self.xmin += offset
+        self.xmax += offset
+
+        tiers = self.keys()
+        for tier in tiers:
+            self[tier].move_t0(offset)
