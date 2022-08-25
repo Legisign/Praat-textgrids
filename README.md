@@ -20,7 +20,7 @@ The module also exports the following variables:
 * `symbols` -- a `dict` of special Praat symbols with their Unicode counterparts
 * `vowels` -- a `list` of all vowels in either Praat or Unicode notation
 
-And the following constants (although they CAN be changed due to Python they SHOULDN’T be changed):
+And the following constants (although they are **not** actually constants in Python, they SHOULDN’T be changed):
 
 * `BINARY` -- symbolic name for the binary file format
 * `TEXT_LONG` -- symbolic name for the long text file format
@@ -29,11 +29,11 @@ And the following constants (although they CAN be changed due to Python they SHO
 
 ## Version
 
-This file documents `praat-textgrids` version 1.4.0.
+This file documents `praat-textgrids` version 1.4.0.dev7.
 
 ## Copyright
 
-Copyright © 2019–20 Legisign.org, Tommi Nieminen <software@legisign.org>
+Copyright © 2019–22 Legisign.org, Tommi Nieminen <software@legisign.org>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
