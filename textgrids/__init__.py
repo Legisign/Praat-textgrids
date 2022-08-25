@@ -20,6 +20,7 @@
                             Interval.__init__() too. (No doubt the proper way
                             would be to define getter and setter methods but
                             that seems like an overkill.)
+  2022-08-25  1.4.0.dev7    PEP8 check.
 
 '''
 
@@ -32,19 +33,23 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev6'
+version = '1.4.0.dev7'
+
 
 class BinaryError(Exception):
     '''Read error for binary files.'''
     pass
+
 
 class ParseError(Exception):
     '''Read error for text files.'''
     def __str__(self):
         return 'Parse error on line {}'.format(self.args[0])
 
+
 # Point class
 Point = namedtuple('Point', ['text', 'xpos'])
+
 
 class Interval(object):
     '''Interval is a timeframe xmin..xmax labelled "text".
@@ -105,6 +110,7 @@ class Interval(object):
             raise ValueError('value not integer or is <= 1')
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
+
 
 class Tier(list):
     '''Tier is a list of either Interval or Point objects.'''
@@ -172,6 +178,7 @@ class Tier(list):
         '''Return tier type as string (for convenience).'''
         return 'PointTier' if self.is_point_tier else 'IntervalTier'
 
+
 class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
@@ -193,11 +200,11 @@ class TextGrid(OrderedDict):
         '''
         global BINARY, TEXT_LONG, TEXT_SHORT
         if fmt == TEXT_LONG:
-            return(self._format_long())
+            return self._format_long()
         elif fmt == TEXT_SHORT:
-            return(self._format_short())
+            return self._format_short()
         elif fmt == BINARY:
-            return(self._format_binary())
+            return self._format_binary()
         else:
             raise ValueError
 
@@ -320,7 +327,9 @@ class TextGrid(OrderedDict):
 
     def _parse_binary(self, data):
         '''Parse BINARY textgrid files. Not intended to be used directly.'''
-        sBool, sByte, sShort, sInt, sDouble = [struct.calcsize(c) for c in '?Bhid']
+        sBool, sByte, sShort, sInt, sDouble = [
+            struct.calcsize(c) for c in '?Bhid'
+        ]
 
         self.xmin, self.xmax = struct.unpack('>2d', data.read(2 * sDouble))
         if not struct.unpack('?', data.read(sBool))[0]:
@@ -369,7 +378,9 @@ class TextGrid(OrderedDict):
 
     def _parse_long(self, data):
         '''Parse LONG textgrid files. Not intended to be used directly.'''
-        grab = lambda s: s.split(' = ')[1]
+        def grab(s):
+            return s.split(' = ')[1]
+
         self.xmin, self.xmax = [float(grab(s)) for s in data[:2]]
         if data[2] != 'tiers? <exists>':
             return
@@ -452,7 +463,8 @@ class TextGrid(OrderedDict):
                     text, xmin, xmax = line
                     elem = Interval(text, float(xmin), float(xmax))
                 else:
-                    raise ValueError('incorrect number of values: file "{}", line {}'.format(csvfile, lineno))
+                    raise ValueError('incorrect number of values: file "{}", '
+                                     'line {}'.format(csvfile, lineno))
                 if not tier:
                     if isinstance(elem, Point):
                         tier = Tier(point_tier=True)
