@@ -21,6 +21,7 @@
                             would be to define getter and setter methods but
                             that seems like an overkill.)
   2022-08-25  1.4.0.dev7    PEP8 check.
+  2022-08-26  1.4.0.dev8    More PEP8 things.
 
 '''
 
@@ -34,6 +35,12 @@ from .templates import *
 # Global constant
 
 version = '1.4.0.dev7'
+__all__ = ['BinaryError',
+           'ParseError',
+           'Point',
+           'Interval',
+           'Tier',
+           'TextGrid']
 
 
 class BinaryError(Exception):

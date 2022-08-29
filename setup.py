@@ -30,16 +30,18 @@
   2020-04-06  1.4.0.dev5    Trying to set Tier.xmin and Tier.xmax correctly.
   2020-04-06  1.4.0.dev6    Trying to set Interval.xmin and Interval.xmax
                             correctly.
+  2022-08-25  1.4.0.dev7    PEP8 check.
+  2022-08-26  1.4.0.dev8    More PEP8 things.
 
 '''
 
 import setuptools
 
-with open('README.md', 'r',encoding='utf-8') as readme:
+with open('README.md', 'r', encoding='utf-8') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.4.0.dev6',
+                 version='1.4.0.dev8',
                  description='Manipulation of Praat TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',

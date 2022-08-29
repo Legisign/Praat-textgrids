@@ -10,6 +10,13 @@
 
 '''
 
+__all__ = ['symbols',
+           'vowels',
+           'diacritics',
+           'inline_diacritics',
+           'index_diacritics',
+           'Transcript']
+
 # Global variables
 
 # Symbol table
