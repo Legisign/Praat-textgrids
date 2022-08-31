@@ -20,7 +20,7 @@ The module also exports the following variables:
 * `symbols` -- a `dict` of special Praat symbols with their Unicode counterparts
 * `vowels` -- a `list` of all vowels in either Praat or Unicode notation
 
-And the following constants (although they CAN be changed due to Python they SHOULDN’T be changed):
+And the following constants (although they are **not** actually constants in Python, they SHOULDN’T be changed):
 
 * `BINARY` -- symbolic name for the binary file format
 * `TEXT_LONG` -- symbolic name for the long text file format
@@ -29,11 +29,11 @@ And the following constants (although they CAN be changed due to Python they SHO
 
 ## Version
 
-This file documents `praat-textgrids` version 1.4.0.
+This file documents `praat-textgrids` version 1.4.0.dev7.
 
 ## Copyright
 
-Copyright © 2019–20 Legisign.org, Tommi Nieminen <software@legisign.org>
+Copyright © 2019–22 Legisign.org, Tommi Nieminen <software@legisign.org>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -115,7 +115,7 @@ All the methods of `list` plus:
 * `merge()` -- merge intervals **NOTE** renamed from 1.3!
 * `to_csv()` -- convert tier data into a CSV-like list
 
-`merge()` merges given intervals into one. It takes two arguments, `first=` and `last=`, both of which are integer indexes with the usual Python semantics: 0 stands for the first element, -1 for the last element, these being also the defaults. The function raises a `TypeError` if used with a point tier, and `ValueError` if the parameters do not specify a valid slice. **Note** This is a function and returns the result instead of modifying the Tier in place.
+`merge()` merges given intervals into one. It takes two arguments, `first=` and `last=`, both of which are integer indexes with the usual Python semantics: 0 stands for the first element, -1 for the last element, these being also the defaults. The function raises a `TypeError` if used with a point tier, and `ValueError` if the parameters do not specify a valid slice. **NB!** This is a function and returns the result instead of modifying the `Tier` in place.
 
 `to_csv()` returns a CSV-like list. It’s mainly intended to be used from the `TextGrid` level method `tier_to_csv()` but can be called directly if writing to a file is not desired.
 
@@ -138,7 +138,7 @@ All the methods of `list` plus:
 * `startswithvowel()` -- does the interval start with a vowel?
 * `timegrid()` -- create a time grid
 
-`containsvowel()`, `endswithvowel()`, and `startswithvowel()` are `bool` functions. They check for possible vowels in the `text` property in both Praat notation and Unicode, but can of course make an error if symbols are used in an unexpected way. They don’t take arguments. (Internally, `endswithvowel()` first transcodes the text to IPA removing all diacritics to simplify the test.)
+`containsvowel()`, `endswithvowel()`, and `startswithvowel()` are `bool` functions (or predicates, in Lisp-parlance). They check for possible vowels in the `text` property in both Praat notation and Unicode, but can of course make an error if symbols are used in an unexpected way. They don’t take arguments. (Internally, `endswithvowel()` first transcodes the text to IPA removing all diacritics to simplify the test.)
 
 `timegrid()` returns a list of timepoints (in `float`) evenly distributed from `xmin` to `xmax`. It takes an optional integer argument specifying the number of timepoints desired; the default is 3. It raises a `ValueError` if the argument is not an integer or is less than 1.
 

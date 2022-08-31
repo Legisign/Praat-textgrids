@@ -6,6 +6,7 @@
   2019-07-11    Separated from textgrids module.
   2019-08-04    Corrected "unrounded open back" symbol.
   2020-10-20    Removed debugging print() calls.
+  2022-08-25    PEP8 check.
 
 '''
 
@@ -139,6 +140,7 @@ index_diacritics = {r'\|v': '\u0329',     # syllabic (under)
 diacritics = inline_diacritics.copy()
 diacritics.update(index_diacritics)
 
+
 class Transcript(str):
     '''String class with an extra method for notation transcoding.'''
 
@@ -188,9 +190,9 @@ class Transcript(str):
                 while out.find(praat, p) > 0:
                     p = out.index('\\')
                     out = out[:p - 1] + \
-                          index_diacritics[out[p:p + 3]] + \
-                          out[p - 1] + \
-                          out[p + 3:]
+                        index_diacritics[out[p:p + 3]] + \
+                        out[p - 1] + \
+                        out[p + 3:]
                     p += 2
 
         # Fourth stage: change index diacritics
