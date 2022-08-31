@@ -106,7 +106,7 @@ class Interval(object):
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
 
-    def move_t0(self, offset):
+    def offset_time(self, offset):
         """Move xmin and xmax by offset."""
         self.xmin += offset
         self.xmax += offset
@@ -184,7 +184,7 @@ class Tier(list):
                 point.xpos += offset
         else:
             for interval in self:
-                interval.move_t0(offset)
+                interval.offset_time(offset)
 
     @property
     def tier_type(self):
@@ -546,11 +546,11 @@ class TextGrid(OrderedDict):
         with open(filename, 'w' if fmt != BINARY else 'wb') as outfile:
             outfile.write(self.format(fmt))
 
-    def move_t0(self, offset):
+    def offset_time(self, offset):
         """Move all boundaries in this TextGrid, including xmin and xmax, by offset."""
         self.xmin += offset
         self.xmax += offset
 
         tiers = self.keys()
         for tier in tiers:
-            self[tier].move_t0(offset)
+            self[tier].offset_time(offset)
