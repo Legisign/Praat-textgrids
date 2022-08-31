@@ -174,7 +174,7 @@ class Tier(list):
                                         i.xmin,
                                         i.xmax) for i in self]
 
-    def move_t0(self, offset):
+    def offset_time(self, offset):
         """Move all timestamps in this Tier, including xmin and xmax, by offset."""
         self.xmin += offset
         self.xmax += offset
