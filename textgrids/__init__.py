@@ -111,6 +111,11 @@ class Interval(object):
         step = self.dur / num
         return [self.xmin + (step * i) for i in range(num + 1)]
 
+    def offset_time(self, offset):
+        """Move xmin and xmax by offset."""
+        self.xmin += offset
+        self.xmax += offset
+
 
 class Tier(list):
     '''Tier is a list of either Interval or Point objects.'''
@@ -137,9 +142,10 @@ class Tier(list):
         # Concatenate only tiers of the same type
         if self.is_point_tier != tier.is_point_tier:
             raise TypeError('tier types differ')
-        # Sanity check
+        # Do not add a tier at the end which begins before this one ends.
         if self.xmax > tier.xmin:
-            raise ValueError('time values do not match')
+            raise ValueError('Cannot extend a tier with one that begins before this tier ends: {max} > {min}', 
+                self.xmax, tier.xmin)
         return Tier(super().__add__(tier))
 
     def merge(self, first=0, last=-1):
@@ -173,6 +179,18 @@ class Tier(list):
                                         i.xmin,
                                         i.xmax) for i in self]
 
+    def offset_time(self, offset):
+        """Move all timestamps in this Tier, including xmin and xmax, by offset."""
+        self.xmin += offset
+        self.xmax += offset
+
+        if self.is_point_tier:
+            for point in self:
+                point.xpos += offset
+        else:
+            for interval in self:
+                interval.offset_time(offset)
+
     @property
     def tier_type(self):
         '''Return tier type as string (for convenience).'''
@@ -182,8 +200,8 @@ class Tier(list):
 class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
-    def __init__(self, filename=None):
-        self.xmin = self.xmax = 0.0
+    def __init__(self, filename=None, xmin = 0.0):
+        self.xmin = self.xmax = xmin
         self.filename = filename
         if self.filename:
             self.read(self.filename)
@@ -445,6 +463,51 @@ class TextGrid(OrderedDict):
             data = infile.read()
         self.parse(data)
 
+    def interval_tier_from_array(self, tier_name, array):
+        """
+        Create a new interval tier from an array presentation.
+
+        The array should contain dicts with the fields/keys label (string),
+        begin and end (float) for each element. Other keys will be ignored.
+
+        tier_name is the name of the new tier. 
+        array is an array of interval dicts:
+            {'label': label, 'begin': time value, 'end': time_value}
+        """
+        tier = Tier()
+        for element in array:
+            elem = Interval(element['label'], element['begin'], element['end'])
+            tier.append(elem)
+            tier.xmax = element['end']
+        self[tier_name] = tier
+        if tier.xmax > self.xmax:
+            self.xmax = tier.xmax
+
+
+    def interval_tier_to_array(self, tier_name):
+        """
+        Return the tier with tier_name as an array.
+
+        The array will contain dicts with the fields/keys label (string),
+        begin and end (float) for each interval. The dicts will be in 
+        time order from first to last.
+
+        If no Tier with the given name exists, a KeyError will be 
+        raised.
+        """
+        tier = self[tier_name]
+        table = []
+        for interval in tier:
+            element = {
+                'label': interval.text,
+                'begin': interval.xmin,
+                'end': interval.xmax
+            }
+            table.append(element)
+        
+        return table
+
+
     def tier_from_csv(self, tier_name, filename):
         '''Import CSV file to an interval or point tier.
 
@@ -493,3 +556,12 @@ class TextGrid(OrderedDict):
         global BINARY, TEXT_SHORT, TEXT_LONG
         with open(filename, 'w' if fmt != BINARY else 'wb') as outfile:
             outfile.write(self.format(fmt))
+
+    def offset_time(self, offset):
+        """Move all boundaries in this TextGrid, including xmin and xmax, by offset."""
+        self.xmin += offset
+        self.xmax += offset
+
+        tiers = self.keys()
+        for tier in tiers:
+            self[tier].offset_time(offset)
