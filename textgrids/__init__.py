@@ -4,25 +4,9 @@
   © Legisign.org, Tommi Nieminen <software@legisign.org>, 2012-20
   Published under GNU General Public License version 3 or newer.
 
-  2020-03-27  1.4.0.dev1    New ideas from Maxine Fily: tier + tier should
-                            work as expected, concatenating tiers.
-  2020-03-29  1.4.0.dev2    Fixed Tier.to_csv() bug, but the changes in dev1
-                            still need testing.
-  2020-03-29  1.4.0.dev3    For tier + tier to work, tier.xmin and tier.xmax
-                            should be read after all. Parser changes as well
-                            as fixes for Tier.__add__().
-  2020-04-05  1.4.0.dev4    Two fixes: Interval.__init__() should RAISE an
-                            exception, not return one if xmin > xmax. Also,
-                            TextGrid.tier_from_csv() should convert the xpos,
-                            xmin, and xmax values read from the CSV to floats.
-  2020-04-06  1.4.0.dev5    Trying to set Tier.xmin and Tier.xmax correctly.
-  2020-04-06  1.4.0.dev6    Forced conversion of xmin, xmax to floats in
-                            Interval.__init__() too. (No doubt the proper way
-                            would be to define getter and setter methods but
-                            that seems like an overkill.)
-  2022-08-25  1.4.0.dev7    PEP8 check.
-  2022-09-02  1.4.0.dev8    Merged Pertti Palo’s stuff; more PEP8 checks (and
-                            alphabetization of the methods :)).
+  2020-10-12  1.4.0     After 2½ years, 1.4.0 with lots of new features.
+                        tier + tier now concatenates tiers. Moving textgrids
+                        in time. PEP8 check.
 
 '''
 
@@ -35,7 +19,7 @@ from .templates import *
 
 # Global constant
 
-version = '1.4.0.dev8'
+version = '1.4.0'
 
 
 class BinaryError(Exception):

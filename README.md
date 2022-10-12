@@ -29,7 +29,7 @@ And the following constants (although they are **not** actually constants in Pyt
 
 ## Version
 
-This file documents `praat-textgrids` version 1.4.0.dev7.
+This file documents `praat-textgrids` version 1.4.0.
 
 ## Copyright
 

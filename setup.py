@@ -19,17 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  2020-03-27  1.4.0.dev1    Tier + Tier -> Tier, as it should be.
-  2020-03-29  1.4.0.dev2    Tier.to_csv() fix, changes in dev1 still need
-                            testing.
-  2020-03-29  1.4.0.dev3    For tier + tier to work, tier.xmin and tier.xmax
-                            should be read after all. Parser changes as well
-                            as fixes for Tier.__add__().
-  2020-04-05  1.4.0.dev4    Fixes in Interval.__init__() and
-                            TextGrid.tier_from_csv().
-  2020-04-06  1.4.0.dev5    Trying to set Tier.xmin and Tier.xmax correctly.
-  2020-04-06  1.4.0.dev6    Trying to set Interval.xmin and Interval.xmax
-                            correctly.
+     2020-10-12    1.4.0    Moving textgrids in time and other features.
 
 '''
 
@@ -39,7 +29,7 @@ with open('README.md', 'r',encoding='utf-8') as readme:
     long_description = readme.read()
 
 setuptools.setup(name='praat-textgrids',
-                 version='1.4.0.dev6',
+                 version='1.4.0',
                  description='Manipulation of Praat TextGrids',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
