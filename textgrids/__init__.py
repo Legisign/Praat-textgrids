@@ -271,6 +271,7 @@ class TextGrid(OrderedDict):
                                                 elem.xmin,
                                                 elem.xmax,
                                                 elem.text)
+            tier_count += 1
         return out
 
     def _format_short(self):
