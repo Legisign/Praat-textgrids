@@ -357,7 +357,10 @@ class TextGrid(OrderedDict):
         if not isinstance(data, bytes):
             raise TypeError
         binary = b'ooBinaryFile\x08TextGrid'
-        text = ['File type = "ooTextFile"', 'Object class = "TextGrid"', '']
+        headers = [
+            ['File type = "ooTextFile"', 'Object class = "TextGrid"', ''],
+            ['File type = "ooTextFile short"', '"TextGrid"', ''],
+        ]
         # Check and then discard binary header
         if data[:len(binary)] == binary:
             buff = io.BytesIO(data[len(binary):])
@@ -373,15 +376,16 @@ class TextGrid(OrderedDict):
                 data = data[2:]
             # Now convert to a text buffer
             buff = [s.strip() for s in data.decode(coding).split('\n')]
-            # Check and then discard header
-            if buff[:len(text)] != text:
-                raise TypeError
-            buff = buff[len(text):]
-            # If the next line starts with a number, this is a short textgrid
-            if buff[0][0] in '-0123456789':
-                self._parse_short(buff)
-            else:
-                self._parse_long(buff)
+            for header in headers:
+                # Check and then discard header
+                if buff[:len(header)] != header:
+                    raise TypeError
+                buff = buff[len(header):]
+                # If the next line starts with a number, this is a short textgrid
+                if buff[0][0] in '-0123456789':
+                    self._parse_short(buff)
+                else:
+                    self._parse_long(buff)
 
     def _parse_binary(self, data):
         '''Parse BINARY textgrid files. Not intended to be used directly.'''
