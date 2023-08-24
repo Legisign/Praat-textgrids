@@ -130,7 +130,7 @@ class Tier(list):
             raise TypeError('tier types differ')
         # Do not add a tier at the end which begins before this one ends.
         if self.xmax > tier.xmin:
-            raise ValueError('Cannot extend a tier with one that begins before this tier ends: {max} > {min}', 
+            raise ValueError('Cannot extend a tier with one that begins before this tier ends: {max} > {min}',
                 self.xmax, tier.xmin)
         return Tier(super().__add__(tier))
 
@@ -186,9 +186,12 @@ class Tier(list):
 class TextGrid(OrderedDict):
     '''TextGrid is a dict of tier names (keys) and Tiers (values).'''
 
-    def __init__(self, filename=None, xmin=0.0):
+    def __init__(self, filename=None, xmin=0.0, coding=None):
         self.xmin = self.xmax = xmin
         self.filename = filename
+        self.coding = coding
+        if self.coding is None:
+            self.coding = "utf-8"
         if self.filename:
             self.read(self.filename)
 
@@ -346,7 +349,7 @@ class TextGrid(OrderedDict):
         for tier in tiers:
             self[tier].offset_time(offset)
 
-    def parse(self, data):
+    def parse(self, data, coding = None):
         '''Parse textgrid data.
 
         Obligatory argument "data" is bytes.
@@ -363,7 +366,7 @@ class TextGrid(OrderedDict):
             except (IndexError, ValueError):
                 raise BinaryError
         else:
-            coding = 'utf-8'
+            coding = self.coding
             # Note and then discard BOM
             if data[:2] == b'\xfe\xff':
                 coding = 'utf-16-be'
@@ -496,8 +499,16 @@ class TextGrid(OrderedDict):
         "filename" is the name of the file.
         '''
         self.filename = filename
-        with open(self.filename, 'rb') as infile:
-            data = infile.read()
+        data = None
+        if isinstance(self.filename, str):
+            with open(self.filename, 'rb') as infile:
+                data = infile.read()
+        if isinstance(self.filename, bytes):
+            data = self.filename
+        if isinstance(self.filename, io.BytesIO):
+            data = self.filename.read()
+        if data is None:
+            raise TypeError("Filename must be any of str, bytes or ByteIO")
         self.parse(data)
 
     def tier_from_csv(self, tier_name, filename):
