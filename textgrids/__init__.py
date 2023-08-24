@@ -373,15 +373,19 @@ class TextGrid(OrderedDict):
                 data = data[2:]
             # Now convert to a text buffer
             buff = [s.strip() for s in data.decode(coding).split('\n')]
-            # Check and then discard header
-            if buff[:len(text)] != text:
-                raise TypeError
-            buff = buff[len(text):]
-            # If the next line starts with a number, this is a short textgrid
-            if buff[0][0] in '-0123456789':
-                self._parse_short(buff)
+            for header in text:
+                # Check and then discard header
+                if buff[:len(header)] != header:
+                    continue
+                buff = buff[len(header):]
+                # If the next line starts with a number, this is a short textgrid
+                if buff[0][0] in '-0123456789':
+                    self._parse_short(buff)
+                else:
+                    self._parse_long(buff)
+                break
             else:
-                self._parse_long(buff)
+                raise TypeError("No valid header seen in text")
 
     def _parse_binary(self, data):
         '''Parse BINARY textgrid files. Not intended to be used directly.'''
