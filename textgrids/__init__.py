@@ -379,7 +379,7 @@ class TextGrid(OrderedDict):
             for header in headers:
                 # Check and then discard header
                 if buff[:len(header)] != header:
-                    raise TypeError
+                    continue
                 buff = buff[len(header):]
                 # If the next line starts with a number, this is a short textgrid
                 if buff[0][0] in '-0123456789':
