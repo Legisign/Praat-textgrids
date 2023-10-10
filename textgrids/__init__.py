@@ -466,7 +466,7 @@ class TextGrid(OrderedDict):
     def _grab_text(data, index):
         res, inc = data[index].strip(), 0
         if res == "text = \"":
-            res += data[index + 1].replace("\n", "")
+            res += data[index + 1].strip()
             inc = 1
         return res, inc    
 
