@@ -111,3 +111,6 @@ test/
 
 # Praat textgrids
 *.*TextGrid
+
+# PyCharm
+.idea
