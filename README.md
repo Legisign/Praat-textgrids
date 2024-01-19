@@ -33,7 +33,7 @@ This file documents `praat-textgrids` version 1.4.0.
 
 ## Copyright
 
-Copyright © 2019–22 Legisign.org, Tommi Nieminen <software@legisign.org>
+Copyright © 2019–24 Legisign.org, Tommi Nieminen <software@legisign.org>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -192,21 +192,21 @@ With optional `retain_diacritics=True` argument the transcoding does not remove 
             # Convert Praat to Unicode in the label
             label = syll.text.transcode()
             # Print label and syllable duration, CSV-like
-            print('"{}";{}'.format(label, syll.dur))
+            print(f'"{label}";{syll.dur}')
 
 ### Snippet 2: convert any textgrid to binary format
 
     import sys
-    import os.path
+    import pathlib
     import textgrids
 
     for arg in sys.argv[1:]:
-        name, ext = os.path.splitext(arg)
+        path = pathlib.Path(arg)
         try:
-            grid = textgrids.TextGrid(arg)
+            grid = textgrids.TextGrid(path)
         except (textgrids.ParseError, textgrids.BinaryError):
             print('Not a recognized file format!', file=sys.stderr)
             continue
 
         # Write a new file
-        grid.write(name + '.bin', fmt=textgrids.BINARY)
+        grid.write(path.with_suffix('.bin'), fmt=textgrids.BINARY)
