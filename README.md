@@ -176,18 +176,28 @@ With optional `retain_diacritics=True` argument the transcoding does not remove 
 ### Snippet 1: list syllable durations
 
     import sys
+    import pathlib
     import textgrids
 
     for arg in sys.argv[1:]:
-        # Try to open the file as textgrid
+    	pathname = pathlib.Path(arg)
+    	
         try:
-            grid = textgrids.TextGrid(arg)
-        # Discard and try the next one
-        except:
-            continue
+            grid = textgrids.TextGrid(pathname)
+        except FileNotFoundError:
+        	print(f'File not found: {pathname.stem}', file=sys.stderr)
+        	continue
+        except PermissionError:
+        	print(f'Cannot read: {pathname.stem}', file=sys.stderr)
+        	continue
+        except (textgrids.ParseError, textgrids.BinaryError):
+        	print(f'Invalid file format: {pathname.stem}', file=sys.stderr)
+        	continue
 
-        # Assume "syllables" is the name of the tier
-        # containing syllable information
+        # We are only interested in the "syllables" tier
+        if 'syllables' not in grid:
+        	print(f'No "syllables" grid in: {pathname.stem}', file=sys.stderr)
+        	continue
         for syll in grid['syllables']:
             # Convert Praat to Unicode in the label
             label = syll.text.transcode()
