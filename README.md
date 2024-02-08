@@ -171,6 +171,11 @@ Optional `to_unicode=False` argument inverts the direction of the transcoding fr
 
 With optional `retain_diacritics=True` argument the transcoding does not remove over- and understrike diacritics from the result.
 
+### 6. Exceptions
+
+* `BinaryError` -- invalid or unknown binary file format
+* `ParseError` -- invalid or unknown text file format
+
 ## Examples
 
 ### Snippet 1: list syllable durations
@@ -204,7 +209,35 @@ With optional `retain_diacritics=True` argument the transcoding does not remove 
             # Print label and syllable duration, CSV-like
             print(f'"{label}";{syll.dur}')
 
-### Snippet 2: convert any textgrid to binary format
+### Snippet 2: calculate mean segment duration
+
+    import sys
+    import pathlib
+    import textgrids
+
+    for arg in sys.argv[1:]:
+        name = pathlib.Path(arg).stem
+        try:
+            grid = textgrids.Grid(arg)
+        except FileNotFoundError:
+            print(f'File not found: "{name}"', file=sys.stderr)
+            continue
+        except PermissionError:
+            print(f'Cannot read: "{name}"', file=sys.stderr)
+            continue
+        except (textgrids.ParseError, textgrids.BinaryError):
+            print(f'Invalid file format: "{name}"', file=sys.stderr)
+            continue
+        if 'segments' not in grid:
+            print(f'No "segments" grid in: "{name}"', file=sys.stderr)
+            continue
+        # I usually use `#' to caption unclear or otherwise not applicable
+        # segments in textgrids; this weeds them out
+        segments = [s for s in grid['segments'] if s.text and s.text != '#']
+        mean = sum(segm.dur for segm in segments) / len(segments)
+        print(f'{name}: mean segment duration = {mean}')
+
+### Snippet 3: convert any textgrid to binary format
 
     import sys
     import pathlib
