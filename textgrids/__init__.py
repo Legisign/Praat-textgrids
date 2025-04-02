@@ -456,10 +456,19 @@ class TextGrid(OrderedDict):
                     p += 3
                 else:
                     x0, x1 = [float(grab(s)) for s in data[p:p + 2]]
-                    text = Transcript(grab(data[p + 2]).strip('"'))
+                    str_text, pi = self._grab_text(data, p + 2)
+                    text = Transcript(grab(str_text).strip('"'))
                     tier.append(Interval(text, x0, x1))
-                    p += 4
+                    p += 4 + pi
             self[tier_name] = tier
+
+    @staticmethod
+    def _grab_text(data, index):
+        res, inc = data[index].strip(), 0
+        if res == "text = \"":
+            res += data[index + 1].strip()
+            inc = 1
+        return res, inc    
 
     def _parse_short(self, data):
         '''Parse SHORT textgrid files. Not intended to be used directly.'''
