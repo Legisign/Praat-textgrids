@@ -363,11 +363,26 @@ class TextGrid(OrderedDict):
             except (IndexError, ValueError):
                 raise BinaryError
         else:
+            # assume to be utf-8 without BOM
             coding = 'utf-8'
-            # Note and then discard BOM
+            # for utf-16 Note and then discard BOM
             if data[:2] == b'\xfe\xff':
                 coding = 'utf-16-be'
                 data = data[2:]
+            if data[:2] == b'\xff\xfe':
+                coding = 'utf-16-le'
+                data = data[2:]
+            # for utf-8 BOM Note and then discard BOM
+            if data[:3] == b'\xef\xbb\xbf':
+                coding = 'utf-8'
+                data = data[3:]
+            # for utf-32 Note and then discard BOM
+            if data[:4] == b'\x00\x00\xfe\xff':
+                coding = 'utf-32-be'
+                data = data[4:]
+            if data[:4] == b'\xff\xfe\x00\x00':
+                coding = 'utf-32-le'
+                data = data[4:]
             # Now convert to a text buffer
             buff = [s.strip() for s in data.decode(coding).split('\n')]
             # Check and then discard header
